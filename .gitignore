@@ -1,0 +1,21 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+
+# SITA Specific
+uploads/
+downloads/
+data/
+dataset_raw/
+archive/
+*.pt
+!yolov8s.pt
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,35 @@
+vehicle_type,color,number_plate,frame
+Car,White,LOZHL495,15
+Bike,Gray,Not Detected,20
+Truck,White,Not Detected,21
+Car,White,Not Detected,29
+Bike,Gray,Not Detected,36
+Bike,Gray,Not Detected,41
+Car,Gray,Not Detected,42
+Truck,Gray,VEHICL,43
+Car,Gray,Not Detected,50
+Truck,Gray,VEHICLE,52
+Car,Gray,Not Detected,60
+Bike,Gray,Not Detected,60
+Bike,Gray,Not Detected,64
+Bike,Gray,Not Detected,72
+Truck,Gray,Not Detected,74
+Bike,Gray,Not Detected,76
+Bike,Gray,Not Detected,85
+Truck,Gray,(NLLELE,87
+Bike,Gray,Not Detected,98
+Bike,Gray,Not Detected,98
+Bike,Gray,Not Detected,100
+Car,Gray,Not Detected,103
+Car,Gray,Not Detected,103
+Car,Gray,Not Detected,103
+Car,White,Not Detected,103
+Car,White,Not Detected,103
+Car,Gray,Not Detected,103
+Car,Gray,Not Detected,103
+Bike,Gray,Not Detected,103
+Car,Red,Not Detected,103
+Bike,Gray,Not Detected,103
+Car,Gray,Not Detected,103
+Bike,Gray,Not Detected,103
+Bike,Red,Not Detected,103

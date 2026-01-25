@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SITA | Enterprise Traffic Analytics</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Outfit', 'sans-serif'] },
+                    colors: { brand: { glow: '#3b82f6', dark: '#020617' } },
+                    boxShadow: { 'glow': '0 0 20px rgba(59, 130, 246, 0.5)', 'soft': '0 0 40px rgba(59, 130, 246, 0.15)' }
+                }
+            }
+        }
+    </script>
+
+    <!-- Link External CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="flex flex-col">
+
+    <header class="py-6 text-center">
+        <h1 class="text-3xl md:text-4xl font-display font-bold text-white tracking-wide uppercase drop-shadow-lg">
+            Smart Intelligent Traffic Analyzer
+        </h1>
+        <p class="text-blue-400 font-mono text-xs tracking-[0.3em] mt-2 opacity-90 animate-pulse">
+            PROCESSING VIDEO... ANALYZING VEHICLES AND PLATES...
+        </p>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 pb-10 max-w-6xl space-y-8">
+        <div class="relative w-full max-w-5xl mx-auto aspect-video main-frame group">
+            <div id="uploadOverlay"
+                class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/80 hover:bg-slate-900/70 transition-colors cursor-pointer">
+                <input type="file" id="videoInput" class="hidden" accept="video/*">
+                <label for="videoInput"
+                    class="text-center cursor-pointer w-full h-full flex flex-col items-center justify-center">
+                    <div
+                        class="w-20 h-20 rounded-full bg-blue-600/20 flex items-center justify-center mb-4 ring-1 ring-blue-500/50 group-hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                            </path>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white">Upload Traffic Video</h2>
+                    <p class="text-slate-400 text-sm mt-2">Click to Browse or Drag & Drop</p>
+                </label>
+            </div>
+
+            <div id="loaderOverlay"
+                class="hidden absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90">
+                <div class="loader-ring mb-6"></div>
+                <h3 class="text-xl font-bold text-white animate-pulse">Analyzing Footage...</h3>
+                <p class="text-blue-400 font-mono text-sm mt-2">AI ENGINE ACTIVE</p>
+            </div>
+
+            <video id="mainVideo" class="hidden w-full h-full object-contain bg-black" playsinline></video>
+
+            <!-- Decorative Corners -->
+            <div
+                class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-blue-500 rounded-tl-lg pointer-events-none">
+            </div>
+            <div
+                class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-blue-500 rounded-tr-lg pointer-events-none">
+            </div>
+            <div
+                class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-blue-500 rounded-bl-lg pointer-events-none">
+            </div>
+            <div
+                class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-blue-500 rounded-br-lg pointer-events-none">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
+            <div class="stat-pill justify-center sm:justify-start">
+                <i class="fas fa-car text-blue-400 text-lg"></i>
+                <div class="flex flex-col items-start leading-none">
+                    <span class="text-[10px] md:text-xs text-slate-400 font-bold uppercase">Total</span>
+                    <span id="countTotal" class="text-lg md:text-xl font-bold text-white">0</span>
+                </div>
+            </div>
+            <div class="stat-pill border-l-4 border-l-blue-500 justify-center sm:justify-start">
+                <i class="fas fa-car-side text-blue-400"></i>
+                <div class="flex flex-col items-start leading-none">
+                    <span class="text-[10px] md:text-xs text-blue-400 font-bold uppercase">Cars</span>
+                    <span id="countCars" class="text-lg md:text-xl font-bold text-white">0</span>
+                </div>
+            </div>
+            <div class="stat-pill border-l-4 border-l-green-500 justify-center sm:justify-start">
+                <i class="fas fa-motorcycle text-green-400"></i>
+                <div class="flex flex-col items-start leading-none">
+                    <span class="text-[10px] md:text-xs text-green-400 font-bold uppercase">Bikes</span>
+                    <span id="countBikes" class="text-lg md:text-xl font-bold text-white">0</span>
+                </div>
+            </div>
+            <div class="stat-pill border-l-4 border-l-yellow-500 justify-center sm:justify-start">
+                <i class="fas fa-truck text-yellow-400"></i>
+                <div class="flex flex-col items-start leading-none">
+                    <span class="text-[10px] md:text-xs text-yellow-400 font-bold uppercase">Trucks</span>
+                    <span id="countTrucks" class="text-lg md:text-xl font-bold text-white">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <a id="downloadBtn" href="#"
+                class="hidden w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-blue-700 to-sky-600 text-white font-bold py-3 px-8 rounded-full transition-transform hover:scale-105">
+                <i class="fas fa-file-csv"></i> Download Report (CSV)</a>
+            <a id="videoDownloadBtn" href="#" target="_blank"
+                class="hidden w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-slate-800 border-slate-600 text-white font-bold py-3 px-8 rounded-full transition-transform hover:scale-105">
+                <i class="fas fa-video"></i> Download Video</a>
+        </div>
+
+        <div class="glass-panel rounded-xl overflow-hidden max-w-5xl mx-auto shadow-2xl">
+            <div class="px-6 py-4 bg-slate-950/80 border-b border-white/5 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-white">Detected Vehicles</h3>
+            </div>
+            <div class="overflow-x-auto max-h-[400px]">
+                <table class="w-full text-left glow-table">
+                    <thead class="sticky top-0 bg-slate-900 z-10 text-xs sm:text-sm">
+                        <tr>
+                            <th class="px-3 sm:px-6 py-4">Vehicle Type</th>
+                            <th class="px-3 sm:px-6 py-4">Vehicle Color</th>
+                            <th class="px-3 sm:px-6 py-4">Number Plate</th>
+                            <th class="px-3 sm:px-6 py-4">Frame</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultBody" class="divide-y divide-white/5 text-slate-300 text-xs sm:text-sm">
+                        <tr class="text-slate-500 italic text-center">
+                            <td colspan="4" class="py-8">Waiting for analysis...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-6 text-center text-slate-600 text-xs">
+        <p>&copy; 2026 SITA VIVA-SAFE SYSTEM</p>
+    </footer>
+
+    <!-- Link External JS -->
+    <script src="js/script.js"></script>
+</body>
+
+</html>
