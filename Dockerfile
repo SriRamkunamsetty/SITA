@@ -13,22 +13,31 @@ RUN apt-get update && apt-get install -y \
 # Set the working directory in the container
 WORKDIR /app
 
+# Create a non-root user for Hugging Face (UID 1000)
+RUN useradd -m -u 1000 user
+USER user
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
+
+# Set directory ownership
+WORKDIR $HOME/app
+
 # Copy the requirements file into the container
-COPY requirements.txt .
+COPY --chown=user requirements.txt .
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies
+RUN pip install --no-cache-dir --user -r requirements.txt
 
-# Copy the rest of the application code into the container
-COPY . .
+# Copy the rest of the application code
+COPY --chown=user . .
 
-# Create necessary directories
+# Create necessary directories with correct permissions
 RUN mkdir -p uploads downloads
 
-# Expose the port the app runs on (Hugging Face uses 7860 by default)
+# Expose the port (Hugging Face runs on 7860)
 EXPOSE 7860
 
-# Define environment variable for Flask
+# Define environment variables
 ENV FLASK_APP=app.py
 ENV PORT=7860
 

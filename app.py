@@ -8,7 +8,7 @@ from processor import SITAProcessor
 
 from flask_cors import CORS
 
-app = Flask(__name__, template_folder='frontend', static_folder='frontend')
+app = Flask(__name__, template_folder='SITA-frontend', static_folder='SITA-frontend')
 CORS(app) # Enable CORS for all routes
 
 # Configuration
