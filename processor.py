@@ -81,8 +81,8 @@ class SITAProcessor:
 
         # OCR Preprocessing (Grayscale first)
         gray = cv2.cvtColor(plate_crop, cv2.COLOR_BGR2GRAY)
-        gray = cv2.resize(gray, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_CUBIC)
-        gray = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
+        gray = cv2.resize(gray, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_LINEAR)
+        # Removed fastNlMeansDenoising (Too slow on CPU)
 
         def run_ocr(img):
             try:
@@ -129,15 +129,25 @@ class SITAProcessor:
 
         frame_idx = 0
         counters = {"total": 0, "cars": 0, "bikes": 0, "trucks": 0}
+        frame_skip = 2 # Process every 2nd frame for 2x speedup
 
         while True:
             ret, frame = cap.read()
             if not ret: break
             frame_idx += 1
+            if frame_idx % 10 == 0:
+                logger.info(f"DEBUG: Processing Frame {frame_idx}")
+            
+            # Use original frame for output, but skipped inference
+            if frame_idx % frame_skip != 0:
+                out.write(cv2.resize(frame, (w_out, h_out)))
+                continue
+
             if scale != 1.0: frame = cv2.resize(frame, (w_out, h_out))
             
+            # Limit inference resolution explicitly for speed
             results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", 
-                                     classes=[2, 3, 7], verbose=False)
+                                     classes=[2, 3, 7], imgsz=640, verbose=False)
             
             frame_ids = []
             for r in results:

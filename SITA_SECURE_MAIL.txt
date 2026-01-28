@@ -1,0 +1,19 @@
+
+============================================================
+      SITA INTELLIGENCE PLATFORM - SECURE IDENTITY GATE
+============================================================
+TIME: Wed Jan 28 22:40:35 2026
+DISPATCHED TO: +916302342821
+CHANNEL: SMS_NETWORK
+SUBJECT: SITA SYSTEM ACCESS REQUEST
+
+GREETINGS,
+
+Your request for platform authentication has been approved. 
+Use the following 6-digit PROTOCOL CODE to verify your session:
+
+>>> 392564 <<<
+
+THIS CODE EXPIRES IN 10 MINUTES.
+PLEASE DO NOT SHARE THIS PROTOCOL WITH UNAUTHORIZED PERSONNEL.
+============================================================

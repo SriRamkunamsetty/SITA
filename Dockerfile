@@ -2,12 +2,14 @@
 FROM python:3.10-slim
 
 # Install system dependencies for OpenCV and EasyOCR
+# Fixed: libgl1-mesa-glx is replaced by libgl1 in newer Debian images
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
     libxrender-dev \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory in the container
@@ -42,4 +44,4 @@ ENV FLASK_APP=app.py
 ENV PORT=7860
 
 # Run the application
-CMD ["gunicorn", "--worker-class", "eventlet", "--workers", "1", "--threads", "100", "--bind", "0.0.0.0:7860", "app:app"]
+CMD ["gunicorn", "--worker-class", "eventlet", "--workers", "1", "--threads", "100", "--timeout", "1000", "--bind", "0.0.0.0:7860", "app:app"]

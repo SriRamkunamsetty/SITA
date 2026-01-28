@@ -1,0 +1,11 @@
+{
+    "admin@sita.ai": {
+        "email": "admin@sita.ai",
+        "name": "SITA Commander",
+        "picture": "",
+        "role": "admin",
+        "status": "verified",
+        "phone": "000-000-0000",
+        "reason": "System Administrator"
+    }
+}

@@ -1,80 +1,105 @@
-# SMART INTELLIGENT TRAFFIC ANALYZER (SITA) 🚀
-**VIVA-SAFE | ENTERPRISE GRADE | PRODUCTION READY**
+# SITA: SMART INTELLIGENT TRAFFIC ANALYZER 🚀
+### **[ ANTIGRAVITY-SCALE INTELLIGENCE CORE ]**
 
-SITA is a high-performance traffic analytics system designed for robust, automated vehicle detection, tracking, and number plate recognition. It transforms raw surveillance footage into actionable data using state-of-the-art Computer Vision.
-
-[![Deploy to Render](https://render.com/images/deploy-to-render.svg)](https://render.com/deploy?repo=https://github.com/SriRamkunamsetty/SITA)
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/SriRamkunamsetty/SITA)
+SITA is a production-grade, futuristic traffic analytics platform designed for the next generation of urban surveillance. It combines cutting-edge Computer Vision (YOLOv11) with a cinematic, highly secure user experience known as the **"Antigravity Experience."**
 
 ---
 
-## 🌟 Key Features
-
-### 1. Advanced Detection & Tracking
-*   **Engine**: Powered by **YOLOv8s** for high accuracy and processing efficiency.
-*   **Tracking**: Integrated **ByteTrack** (via `lapx`) for industrial-grade persistent tracking.
-*   **Strict Counting**: Vehicles are **ONLY** counted after being persistently tracked for **5 consecutive frames**, eliminating ghost detections and flickering.
-
-### 2. "VIVA-SAFE" Compliance Logic
-*   **Dual-Label Architecture**:
-    *   **UI Overlay**: Displays generic **"Vehicle"** labels for a clean, professional appearance.
-    *   **Analytics Core**: Internally classifies and records **Car, Bike, and Truck** for the data report.
-*   **Strict Color Logic**: Detects **Blue, White, Red, Black, Gray**. Fallback to **"Blue"** if confidence < 30%.
-*   **Exclusions**: Public transport (Buses) is explicitly ignored from analytics.
+## 🌌 The Design Philosophy: "Antigravity"
+SITA is not just a tool; it's an immersive experience. The frontend (React/Vite) is built with a deep-space aesthetic, featuring:
+- **Cinematic Depth**: Parallax starfields, glassmorphism panels, and 3D motion illusions.
+- **High-Fidelity Interaction**: Smooth transitions, glitch-effect verifications, and custom audio feedback via the Web Audio API.
+- **Agent Focus**: A streamlined, sidebar-free dashboard designed for maximum visual focus on neural data feeds.
 
 ---
 
-## ⚙️ Technical Logic (Viva-Ready)
+## 🛠 Tech Stack & Architecture
 
-### OCR & Plate Recognition
-*   **Scanning Frequency**: OCR runs every **10 frames** per vehicle until localized or locked.
-*   **Efficiency**: Max **5 attempts** per vehicle; OCR is skipped entirely if `plate_locked == True`.
-*   **Preprocessing**: Multi-pass system (Grayscale -> Enhancement -> Denoising) with dynamic padding.
-*   **Confidence Threshold**: Strictly locks plates at **0.15** confidence or higher.
+### **Frontend Integration (The Command Center)**
+- **Framework**: React 18 with Vite (Ultra-fast HMR).
+- **Styling**: Tailored Tailwind CSS with a custom "Deep Space" palette (`brand-dark`, `brand-neon`).
+- **Animations**: Framer Motion for sophisticated UI choreography.
+- **Icons**: Lucide-React for crisp, vector-based iconography.
+- **State Management**: React Context (Auth, Toast notifications).
 
-### CSV & Reporting Guarantees
-*   **Persistence**: CSV is written incrementally and flushed every 10 frames to prevent data loss.
-*   **Accuracy**: Every counted vehicle (seen >= 5 frames) is guaranteed a row in the CSV.
-*   **Standardized Format**: `vehicle_type | color | number_plate | frame`.
-*   **Fallback**: Unreadable plates are logged as **"Not Detected"** to maintain sync with global counters.
-
-### Live Dashboard
-*   **Async Processing**: Uses threading with `job_lock` for thread-safety.
-*   **Seamless Polling**: Frontend polls `/status` every 1s, receiving real-time counter states:
-    ```json
-    { "status": "processing", "counters": { "total": 12, "cars": 8, "bikes": 3, "trucks": 1 } }
-    ```
-*   **UX Design**: Video player remains **hidden** until processing is 100% complete to ensure zero lag.
-*   **Mobile Support**: Fully responsive layout (Mobile, Tablet, Desktop) using Tailwind CSS.
+### **Backend Core (The Neural Hub)**
+- **Engine**: Flask (Python) with Threaded Multi-Job support.
+- **Vision Engine**: **YOLOfier-v11** optimized for vehicle detection and persistent tracking.
+- **OCR Engine**: Multi-pass EasyOCR with dynamic plate localized frames.
+- **Database**: SQLite with unique Agent ID generation (`SITA-XXXX`).
 
 ---
 
-## 🛠 Tech Stack
+## 🚀 Key Features
 
-*   **Backend**: Python, Flask, Threading.
-*   **AI/CV**: YOLOv8, OpenCV, EasyOCR, NumPy, Lapx.
-*   **Frontend**: Responsive HTML5, TailwindCSS, FontAwesome.
+### **1. Secure Identity Gate**
+- **Dual Authenticator**: Access via **Google OAuth 2.0** or **Secure Email OTP**.
+- **Multi-Step Onboarding**: Automated agent registration covering identity, contact, purpose, and ethics compliance.
+- **Identity Encryption**: Every agent is assigned a permanent, unique `SITA-XXXX` identifier.
+
+### **2. Auto-Verification Protocol**
+- **Real-time Handshake**: A dedicated verification stage that polls the backend to confirm agent status.
+- **Cinematic Verification**: Visual "Unlock" sequences with system sound feedback.
+
+### **3. Advanced Vision Analytics Hub**
+- **Live Detection Feed**: Drag-and-drop video ingestion with real-time progress streaming.
+- **Neural Counters**: Live tracking of Car, Bike, and Truck metrics (Buses excluded per protocol).
+- **Master Detection Log**: A high-density table featuring Plate ID, Confidence, Vehicle Type, and Color.
+- **Integrated Playback**: Post-analysis, the system automatically swaps the scan-placeholder for the **actual processed video file**.
+
+### **4. Investigative Reporting**
+- **Smart Filters**: Real-time searching across the entire detection log.
+- **Report Hub**: One-click **EXPORT DATA** to professional CSV format for offline analysis.
+- **Scroll Navigation**: Integrated "Quick-Jump" features for fluid navigation between the vision feed and data logs.
 
 ---
 
-## 📥 Installation
+## 🛡 System Robustness & Security
+SITA is built for enterprise stability:
+- **Kernel Panic Protection**: Global `ErrorBoundary` catches unexpected React crashes and displays a custom failure recovery screen.
+- **Interactive Protocols**: System-wide `Toast` system provides agents with immediate feedback on all critical API and neutral engine actions.
+- **Automated Maintenance**: A backend **Storage Audit** routine purges temporary data on startup to maintain system peak performance.
+- **Secure Identity Gate**: Requests are validated against unique agent sessions to ensure data integrity.
 
+---
+
+## 🛠️ Setup & Installation
+
+### **1. Prerequisites**
+- Python 3.9+
+- Node.js 16+
+- npm 7+
+
+### **2. Neural Core (Backend) Setup**
 ```bash
+# Navigate to root
+# (Recommended) Create a virtual environment
 python -m venv .venv
-.\.venv\Scripts\activate
-pip install ultralytics flask opencv-python easyocr lapx numpy
+source .venv/bin/activate  # Windows: .\.venv\Scripts\activate
+
+# Install AI dependencies
+pip install ultralytics flask flask-cors opencv-python easyocr lapx numpy
 python app.py
 ```
-**URL**: [http://127.0.0.1:5000](http://127.0.0.1:5000)
+
+### **3. Command Center (Frontend) Setup**
+```bash
+cd sita-web
+npm install
+npm run dev
+```
 
 ---
 
-## 🔍 Verification & Testing
-1.  **Count Sync**: Ensure "Total" counter matches the number of rows in the CSV report.
-2.  **UI Verification**: Check that bounding boxes in video are labeled **"Vehicle"**.
-3.  **Fallback Check**: Confirm unreadable plates are logged as **"Not Detected"**.
-4.  **Speed Test**: Confirm processing completes quickly (optimized via **1020px downscaling**).
+## 🗺️ Project Journey (Development Process)
+SITA's development followed a rigorous 13-phase implementation plan:
+1. **Foundation**: Established the dual-repo architecture and reference designs.
+2. **Auth Engineering**: Built the SQL-backed Google/OTP authentication engine.
+3. **Identity Design**: Created the agent profiling and unique tracking system.
+4. **Dashboard Revolution**: Redesigned the UI into a full-width "Antigravity" focus.
+5. **Vision Integration**: Connected real-time neural analysis feeds to the React frontend.
+6. **Reporting & Polish**: Implemented video playback, CSV exports, and global robustness guardrails.
 
 ---
 
-**© 2026 SITA | Enterprise Traffic Intelligence**
+**© 2026 SITA | Enterprise Traffic Intelligence | [REDACTED] FOR SECURITY**

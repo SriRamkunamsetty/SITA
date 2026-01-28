@@ -1,0 +1,340 @@
+INFO:processor:Initializing SITA Processor (VIVA-SAFE)...
+WARNING:easyocr.easyocr:Using CPU. Note: This module is much faster with a GPU.
+Starting SITA VIVA-SAFE Server...
+ * Serving Flask app 'app'
+ * Debug mode: on
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:7860
+ * Running on http://192.168.0.103:7860
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+INFO:processor:Initializing SITA Processor (VIVA-SAFE)...
+WARNING:easyocr.easyocr:Using CPU. Note: This module is much faster with a GPU.
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 113-103-638
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:27] "[35m[1mGET / HTTP/1.1[0m" 500 -
+Traceback (most recent call last):
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "C:\Users\Shiva\Downloads\SITA\SITA\SITA\app.py", line 97, in index
+    return render_template('index.html')
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\jinja2\environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\jinja2\environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\jinja2\environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\jinja2\loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\templating.py", line 65, in get_source
+    return self._get_source_fast(environment, template)
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\templating.py", line 99, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: index.html
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:27] "[35m[1mGET / HTTP/1.1[0m" 500 -
+Traceback (most recent call last):
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "C:\Users\Shiva\Downloads\SITA\SITA\SITA\app.py", line 97, in index
+    return render_template('index.html')
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\jinja2\environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\jinja2\environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\jinja2\environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\jinja2\loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\templating.py", line 65, in get_source
+    return self._get_source_fast(environment, template)
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\site-packages\flask\templating.py", line 99, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: index.html
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:27] "GET /?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:27] "GET /?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:27] "[36mGET /?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:27] "[36mGET /?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:28] "GET /?__debugger__=yes&cmd=resource&f=console.png&s=fP4j7l0OBitVoxdFO03P HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:28] "[36mGET /?__debugger__=yes&cmd=resource&f=console.png&s=fP4j7l0OBitVoxdFO03P HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:28] "GET /?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:28] "[36mGET /?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:37] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:37] "GET /assets/index-jYmGjbMs.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:37] "GET /assets/index-CZlE_mIg.css HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:37] "[33mGET /grid.svg HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:37] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:37] "GET /vite.svg HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:37] "[36mGET /assets/index-CZlE_mIg.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:37] "[36mGET /assets/index-jYmGjbMs.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:38] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:38] "[36mGET /assets/index-jYmGjbMs.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:38] "[36mGET /assets/index-CZlE_mIg.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:38] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:38] "[36mGET /assets/index-jYmGjbMs.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:38] "[36mGET /assets/index-CZlE_mIg.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:51:38] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:53:32] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:53:32] "GET /assets/index-jYmGjbMs.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:53:32] "GET /assets/index-CZlE_mIg.css HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:53:33] "[33mGET /grid.svg HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 19:53:33] "GET /vite.svg HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:35:18] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:35:18] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:35:18] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:35:18] "GET /assets/index-DgpsS3Pz.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:35:18] "GET /assets/index-BCldrYA9.css HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:35:18] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:35:18] "[36mGET /assets/index-DgpsS3Pz.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:35:18] "[36mGET /assets/index-BCldrYA9.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:35:19] "[33mGET /grid.svg HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:35:22] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug: * Detected change in 'C:\\Users\\Shiva\\Downloads\\SITA\\SITA\\SITA\\app.py', reloading
+Starting SITA VIVA-SAFE Server...
+Exception in thread Thread-1 (serve_forever):
+Traceback (most recent call last):
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016, in _bootstrap_inner
+INFO:werkzeug: * Restarting with stat
+INFO:processor:Initializing SITA Processor (VIVA-SAFE)...
+WARNING:easyocr.easyocr:Using CPU. Note: This module is much faster with a GPU.
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 113-103-638
+INFO:werkzeug: * Detected change in 'C:\\Users\\Shiva\\Downloads\\SITA\\SITA\\SITA\\app.py', reloading
+Database initialized.
+Starting SITA VIVA-SAFE Server...
+INFO:werkzeug: * Restarting with stat
+INFO:processor:Initializing SITA Processor (VIVA-SAFE)...
+WARNING:easyocr.easyocr:Using CPU. Note: This module is much faster with a GPU.
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 113-103-638
+INFO:werkzeug: * Detected change in 'C:\\Users\\Shiva\\Downloads\\SITA\\SITA\\SITA\\verify_db.py', reloading
+Database initialized.
+Starting SITA VIVA-SAFE Server...
+INFO:werkzeug: * Restarting with stat
+INFO:processor:Initializing SITA Processor (VIVA-SAFE)...
+WARNING:easyocr.easyocr:Using CPU. Note: This module is much faster with a GPU.
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 113-103-638
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:45:27] "[33mGET / HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:45:27] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:45:30] "[33mGET / HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:45:30] "[33mGET / HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:45:31] "[33mGET / HTTP/1.1[0m" 404 -
+INFO:werkzeug: * Detected change in 'C:\\Users\\Shiva\\Downloads\\SITA\\SITA\\SITA\\database.py', reloading
+Database initialized.
+Starting SITA VIVA-SAFE Server...
+INFO:werkzeug: * Restarting with stat
+INFO:processor:Initializing SITA Processor (VIVA-SAFE)...
+WARNING:easyocr.easyocr:Using CPU. Note: This module is much faster with a GPU.
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 113-103-638
+INFO:werkzeug: * Detected change in 'C:\\Users\\Shiva\\Downloads\\SITA\\SITA\\SITA\\verify_db.py', reloading
+Database initialized.
+Starting SITA VIVA-SAFE Server...
+INFO:werkzeug: * Restarting with stat
+INFO:processor:Initializing SITA Processor (VIVA-SAFE)...
+WARNING:easyocr.easyocr:Using CPU. Note: This module is much faster with a GPU.
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 113-103-638
+INFO:werkzeug: * Detected change in 'C:\\Users\\Shiva\\Downloads\\SITA\\SITA\\SITA\\verify_db.py', reloading
+Database initialized.
+Starting SITA VIVA-SAFE Server...
+INFO:werkzeug: * Restarting with stat
+INFO:processor:Initializing SITA Processor (VIVA-SAFE)...
+WARNING:easyocr.easyocr:Using CPU. Note: This module is much faster with a GPU.
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 113-103-638
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:55:52] "[33mGET / HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:55:52] "[33mGET / HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:55:52] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:55:53] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:55:56] "[33mGET / HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:55:56] "[33mGET / HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:55:56] "[33mGET / HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:55:56] "[33mGET / HTTP/1.1[0m" 404 -
+INFO:werkzeug: * Detected change in 'C:\\Users\\Shiva\\Downloads\\SITA\\SITA\\SITA\\app.py', reloading
+Database initialized.
+Starting SITA VIVA-SAFE Server...
+Exception in thread Thread-1 (serve_forever):
+Traceback (most recent call last):
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "C:\Users\Shiva\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953, in run
+INFO:werkzeug: * Restarting with stat
+INFO:processor:Initializing SITA Processor (VIVA-SAFE)...
+WARNING:easyocr.easyocr:Using CPU. Note: This module is much faster with a GPU.
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 113-103-638
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:23] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:23] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:23] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:23] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:23] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:24] "GET /assets/index-BlIVzpEw.css HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:24] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:24] "[36mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:24] "GET /assets/index-DIvWsuKS.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:24] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:30] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:30] "[36mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:30] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:31] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:33] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:33] "[36mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:33] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 20:59:33] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:03:12] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:03:12] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:03:12] "[36mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:03:13] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:03:51] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:04:25] "GET /assets/index-DIvWsuKS.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:04:42] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:04:42] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:04:42] "[36mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:04:42] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:04:44] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:04:44] "[36mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:04:44] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:04:44] "[36mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:04:44] "GET /assets/index-DIvWsuKS.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:04:44] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:07:22] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:07:22] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:07:22] "[36mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:07:22] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:07:23] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:09:51] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:09:52] "GET /assets/index-DIvWsuKS.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:09:52] "GET /assets/index-BlIVzpEw.css HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:09:52] "GET /vite.svg HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:16:18] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:16:18] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:16:18] "GET /assets/index-BlIVzpEw.css HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:16:18] "[36mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:16:19] "GET /assets/index-DIvWsuKS.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:16:19] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:16:19] "GET /vite.svg HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:16:19] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:16:26] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:16:26] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:16:26] "[36mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:16:27] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:18:01] "GET /assets/index-BlIVzpEw.css HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:18:01] "GET /assets/index-DIvWsuKS.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:18:48] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:18:48] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:18:49] "[36mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:19:18] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:19:18] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:19:18] "[36mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:19:18] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:29] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:29] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:30] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:30] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:33] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:33] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:33] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:34] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:34] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:34] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:34] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:34] "GET /vite.svg HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:44] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:44] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:45] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:45] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:46] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:46] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:46] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:46] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:47] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:47] "GET /assets/index-DIvWsuKS.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:47] "[35m[1mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 206 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:47] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:47] "[35m[1mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 206 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:47] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:56] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:56] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:56] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:57] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:57] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:57] "GET /assets/index-DIvWsuKS.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:20:57] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:21:09] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:21:09] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:21:09] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:21:11] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:21:11] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:21:11] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:21:12] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:22:18] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:22:18] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:22:18] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:22:18] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:22:51] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:22:51] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:22:52] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:22:52] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:23:56] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:23:56] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:23:56] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:23:57] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:23:57] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:23:57] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:23:57] "GET /vite.svg HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:31:56] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:31:56] "[36mGET /assets/index-DIvWsuKS.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:31:56] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:31:57] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:35:41] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:35:41] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:35:41] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:35:41] "[36mGET / HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:35:41] "[33mGET /assets/index-BlIVzpEw.css HTTP/1.1[0m" 404 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:35:42] "GET /assets/index-DIvWsuKS.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [28/Jan/2026 21:35:42] "[36mGET /vite.svg HTTP/1.1[0m" 304 -
+[Wed Jan 28 22:07:20 2026] DEBUG: Request for path: ''
+[Wed Jan 28 22:12:01 2026] DEBUG: Request for path: ''
+[Wed Jan 28 22:12:02 2026] DEBUG: Request for path: ''
+[Wed Jan 28 22:14:06 2026] DEBUG: Request for path: ''
+[Wed Jan 28 22:14:06 2026] DEBUG: Request for path: ''
+[Wed Jan 28 22:18:48 2026] DEBUG: Request for path: ''
+[Wed Jan 28 22:18:49 2026] DEBUG: Request for path: ''
+[Wed Jan 28 22:22:27 2026] DEBUG: Request for path: ''
+[Wed Jan 28 22:22:27 2026] DEBUG: Request for path: ''
+[Wed Jan 28 22:22:27 2026] DEBUG: Request for path: ''
+[Wed Jan 28 22:22:35 2026] DEBUG: Request for path: ''
