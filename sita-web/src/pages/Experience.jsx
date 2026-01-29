@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Brain, Eye, Lock, ChevronDown, Zap, Network, Database } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -11,6 +12,7 @@ import StatusIndicator from '../components/StatusIndicator';
 
 const Experience = () => {
     const navigate = useNavigate();
+    const [showRoleSelector, setShowRoleSelector] = useState(false);
 
     const scrollToContent = () => {
         document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
@@ -73,13 +75,58 @@ const Experience = () => {
                     {/* CTA Button */}
                     <div className="mt-12 md:mt-16">
                         <NeonButton
-                            onClick={() => navigate('/access')}
+                            onClick={() => setShowRoleSelector(true)}
                             size="lg"
                         >
                             Access SITA
                         </NeonButton>
                     </div>
                 </div>
+
+                {/* Role Selector Modal */}
+                {showRoleSelector && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+                        <GlassPanel className="w-full max-w-md p-8" corners>
+                            <h3 className="font-orbitron text-xl font-bold text-center mb-2 text-white">SELECT ACCESS ROLE</h3>
+                            <p className="font-mono text-xs text-center text-muted-foreground mb-8">IDENTIFY YOUR CLEARANCE LEVEL</p>
+
+                            <div className="grid gap-4">
+                                <button
+                                    onClick={() => navigate('/access', { state: { role: 'admin' } })}
+                                    className="p-4 border border-primary/30 bg-primary/10 rounded-lg hover:bg-primary/20 hover:border-primary transition-all group flex items-center gap-4 text-left"
+                                >
+                                    <div className="p-3 rounded bg-primary/20 text-primary group-hover:bg-primary group-hover:text-black transition-colors">
+                                        <Shield className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <div className="font-orbitron text-sm font-bold text-white">ADMINISTRATOR</div>
+                                        <div className="font-mono text-[10px] text-muted-foreground">Elevated Privileges // System Control</div>
+                                    </div>
+                                </button>
+
+                                <button
+                                    onClick={() => navigate('/access', { state: { role: 'agent' } })}
+                                    className="p-4 border border-white/10 bg-white/5 rounded-lg hover:bg-white/10 hover:border-white/30 transition-all group flex items-center gap-4 text-left"
+                                >
+                                    <div className="p-3 rounded bg-white/10 text-white group-hover:bg-white group-hover:text-black transition-colors">
+                                        <Brain className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <div className="font-orbitron text-sm font-bold text-white">FIELD AGENT</div>
+                                        <div className="font-mono text-[10px] text-muted-foreground">Standard Access // Data Analysis</div>
+                                    </div>
+                                </button>
+                            </div>
+
+                            <button
+                                onClick={() => setShowRoleSelector(false)}
+                                className="w-full text-center mt-6 text-xs font-mono text-muted-foreground hover:text-white transition-colors"
+                            >
+                                CANCEL SELECTION
+                            </button>
+                        </GlassPanel>
+                    </div>
+                )}
 
                 {/* Scroll Indicator */}
                 <button
@@ -303,7 +350,7 @@ const Experience = () => {
                     {/* Final CTA */}
                     <div className="text-center mt-16">
                         <NeonButton
-                            onClick={() => navigate('/access')}
+                            onClick={() => setShowRoleSelector(true)}
                             size="lg"
                         >
                             Request Access

@@ -19,7 +19,8 @@ import {
     Pause,
     RefreshCw,
     Upload,
-    User
+    User,
+    Download
 } from 'lucide-react';
 import StarField from '../components/StarField';
 import GlassPanel from '../components/ui/GlassPanel';

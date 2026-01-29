@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, User, Phone, FileText, Shield, Mail, Lock, Globe } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
@@ -32,6 +32,7 @@ const countryCodes = [
 
 const AccessGate = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user, login, refreshUser } = useAuth();
     const { showToast } = useToast();
     const [currentStep, setCurrentStep] = useState(1);
@@ -131,6 +132,15 @@ const AccessGate = () => {
                 name: user.name || 'Agent',
                 email: user.email // Sync the unique identifier (email or phone)
             }));
+
+            // ADMIN SHORTCUT
+            const locationState = location.state;
+            if (locationState?.role === 'admin') {
+                showToast("ADMIN PRIVILEGES RECOGNIZED. BYPASSING PROTOCOLS.", "success");
+                navigate('/dashboard'); // Direct access
+                return;
+            }
+
             setCurrentStep(2);
         } catch (e) {
             showToast("INVALID SECURITY CODE", "error");
@@ -158,7 +168,13 @@ const AccessGate = () => {
             showToast("PROFILE ENCRYPTED AND SYNCED", "success");
             navigate('/verification');
         } catch (e) {
-            // Error handled by Toast
+            if (e.status === 403 || e.message?.includes('ACCESS_DENIED')) {
+                showToast(e.message || "SECURITY PROTOCOL: INTENT REJECTED", "error");
+                setMessage("SECURITY LOCKOUT: INVALID INTENT");
+                setFormData(prev => ({ ...prev, reason: '' })); // Clear invalid input
+            } else {
+                showToast("CONNECTION FAILED", "error");
+            }
         } finally {
             setIsLoading(false);
         }

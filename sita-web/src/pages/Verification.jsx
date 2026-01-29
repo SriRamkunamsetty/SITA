@@ -82,10 +82,10 @@ export default function Verification() {
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.5 }}
-                                className="relative"
+                                className="relative w-24 h-24 flex items-center justify-center"
                             >
-                                <div className="w-24 h-24 border-4 border-brand-neon/30 border-t-brand-neon rounded-full animate-spin absolute inset-0" />
-                                <Lock size={40} className="text-white/50 relative z-10 top-7" />
+                                <div className="absolute inset-0 border-4 border-brand-neon/30 border-t-brand-neon rounded-full animate-spin" />
+                                <Lock size={40} className="text-white/50 relative z-10" />
                             </motion.div>
                         )}
 

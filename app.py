@@ -108,6 +108,83 @@ def background_process(filepath, csv_path, video_path):
 
 # --- API Endpoints ---
 
+# --- EMAIL SYSTEM ---
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+def get_html_email_template(code, target):
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #e2e8f0; margin: 0; padding: 0; }}
+            .container {{ max-width: 600px; margin: 40px auto; background: #1e293b; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #334155; }}
+            .header {{ background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%); padding: 30px; text-align: center; }}
+            .header h1 {{ margin: 0; color: white; font-size: 24px; letter-spacing: 2px; }}
+            .content {{ padding: 40px; text-align: center; }}
+            .code-box {{ background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 20px; margin: 30px 0; font-family: 'Courier New', monospace; font-size: 36px; letter-spacing: 8px; font-weight: bold; color: #38bdf8; display: inline-block; }}
+            .footer {{ background: #0f172a; padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #334155; }}
+            .badge {{ display: inline-block; padding: 4px 12px; border-radius: 20px; background: rgba(6, 182, 212, 0.2); color: #22d3ee; font-size: 11px; font-weight: bold; margin-bottom: 20px; }}
+            .image-preview {{ width: 100%; border-radius: 8px; margin-top: 20px; opacity: 0.8; border: 1px solid #334155; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>SITA INTELLIGENCE</h1>
+            </div>
+            <div class="content">
+                <span class="badge">SECURE LOGIN PROTOCOL</span>
+                <p>Hello Agent,</p>
+                <p>A request was received to access the <strong>SITA Command Center</strong> for account associated with <strong>{target}</strong>.</p>
+                
+                <div class="code-box">{code}</div>
+                
+                <p style="color: #94a3b8; font-size: 14px;">This protocol code is valid for 10 minutes. <br>If you did not request this, please terminate this session immediately.</p>
+                
+                <!-- Placeholder for visual flair - Use public URL or base64 in production -->
+                <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #334155;">
+                     <p style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #64748b;">System Visuals</p>
+                    <img src="https://raw.githubusercontent.com/SriRamkunamsetty/SITA/main/reference_ui/detection.png" alt="SITA Interface" class="image-preview" onerror="this.style.display='none'">
+                </div>
+            </div>
+            <div class="footer">
+                <p>SITA: Smart Intelligent Traffic Analyzer | VIVA-SAFE Core</p>
+                <p>Automated Security Dispatch • Do Not Reply</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+def send_smtp_email(target, code):
+    sender_user = os.environ.get('SITA_MAIL_USER')
+    sender_pass = os.environ.get('SITA_MAIL_PASS')
+    
+    if not sender_user or not sender_pass:
+        return False
+        
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = f"SITA Security <{sender_user}>"
+        msg['To'] = target
+        msg['Subject'] = f"SITA Access Protocol: {code}"
+        
+        msg.attach(MIMEText(get_html_email_template(code, target), 'html'))
+        
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(sender_user, sender_pass)
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as e:
+        logger.error(f"SMTP Flow Failed: {e}")
+        return False
+
+
 @app.route('/api/auth/otp/send', methods=['POST'])
 def send_otp():
     data = request.json
@@ -123,48 +200,48 @@ def send_otp():
     # Generate 6-digit code
     code = f"{random.randint(100000, 999999)}"
     
+    # 1. Attempt Real Email Implementation
+    email_sent = False
+    if email:
+        email_sent = send_smtp_email(target, code)
+    
+    # 2. Local Fallback (Preview File)
+    # We ALWAYS write the file in Dev mode so user can see the beautiful HTML even if email fails
+    try:
+        html_content = get_html_email_template(code, target)
+        with open('SITA_SECURE_MAIL.html', 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        
+        # Keep the TXT file for legacy/convenience reading
+        with open('SITA_SECURE_MAIL.txt', 'w') as f:
+            f.write(f"CODE: {code}\nTARGET: {target}\n(Open SITA_SECURE_MAIL.html for full preview)")
+            
+    except Exception as e:
+        print(f"Error writing local mail file: {e}")
+    
     # Branded Logging to Console
     print("\n" + "="*70)
     print("        SITA INTELLIGENCE PLATFORM - SECURE IDENTITY GATE")
     print("="*70)
     print(f"  DISPATCHED TO: {target}")
-    print(f"  PROTOCOL: {'SECURE_EMAIL' if email else 'SECURE_SMS'}")
     print(f"  SECURITY_CODE: {code}")
+    if email_sent:
+        print("  STATUS: [SENT VIA SMTP]")
+    else:
+        print("  STATUS: [SAVED TO LOCAL FILE] (Set SITA_MAIL_USER/PASS to enable SMTP)")
     print("="*70 + "\n")
     
-    # Write to the visible 'Local Inbox' for the User
-    try:
-        with open('SITA_SECURE_MAIL.txt', 'w') as f:
-            f.write(f"""
-============================================================
-      SITA INTELLIGENCE PLATFORM - SECURE IDENTITY GATE
-============================================================
-TIME: {time.ctime()}
-DISPATCHED TO: {target}
-CHANNEL: {'EMAIL_PROTOCOL' if email else 'SMS_NETWORK'}
-SUBJECT: SITA SYSTEM ACCESS REQUEST
-
-GREETINGS,
-
-Your request for platform authentication has been approved. 
-Use the following 6-digit PROTOCOL CODE to verify your session:
-
->>> {code} <<<
-
-THIS CODE EXPIRES IN 10 MINUTES.
-PLEASE DO NOT SHARE THIS PROTOCOL WITH UNAUTHORIZED PERSONNEL.
-============================================================
-""")
-    except Exception as e:
-        print(f"Error writing mock mail file: {e}")
-    
-    # Save for verification (if email not provided, use phone as key in DB)
+    # Save for verification
     database.save_otp(email or target, code)
     
+    msg = f"Code sent to {target}"
+    if not email_sent:
+        msg = f"DEV: Code is {code}. (See SITA_SECURE_MAIL.html)"
+    
     return jsonify({
-        "message": f"DEV_MODE: Your SITA Access Code is {code}. (In production, this would be an SMS/Email)",
+        "message": msg,
         "dev_code": code,
-        "status": "dispatched"
+        "status": "dispatched" if email_sent else "local_save"
     }), 200
 
 @app.route('/api/auth/otp/verify', methods=['POST'])
@@ -196,6 +273,33 @@ def google_auth():
     user = database.upsert_google_user(email, name, picture)
     return jsonify(user)
 
+def validate_mission_brief(text):
+    if not text:
+        return False, "Mission brief is empty."
+    
+    text_lower = text.lower()
+    
+    # 1. Length Check
+    if len(text) < 20:
+        return False, "Brief too short. Elaboration required."
+
+    # 2. Keyword Analysis (Simulating AI Intent Detection)
+    prohibited_terms = [
+        'hack', 'crack', 'bypass', 'attack', 'destroy', 'steal', 'fake', 
+        'bot', 'spam', 'override', 'illegal', 'malware', 'virus', 'kill',
+        'inject', 'exploit', 'ddos'
+    ]
+    
+    for term in prohibited_terms:
+        if term in text_lower:
+            return False, "MALICIOUS INTENT DETECTED. NEURAL CORE SAFETY LOCK ENGAGED."
+            
+    # 3. Pattern Analysis (Simulate detecting gibberish/spam)
+    if len(set(text)) < 5: # e.g. "aaaaa..."
+        return False, "COGNITIVE PATTERN REJECTED. HUMAN INPUT REQUIRED."
+        
+    return True, "Valid"
+
 @app.route('/api/user/onboard', methods=['POST'])
 def onboard_user():
     data = request.json
@@ -204,6 +308,12 @@ def onboard_user():
     phone = data.get('phone')
     country_code = data.get('country_code', '+1') # Default
     reason = data.get('reason')
+    
+    # --- SECURITY CHECK ---
+    is_valid, msg = validate_mission_brief(reason)
+    if not is_valid:
+        return jsonify({"error": "ACCESS_DENIED", "message": msg}), 403
+    # ----------------------
     
     user = database.update_user_profile(email, name, phone, country_code, reason)
     if user:
