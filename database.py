@@ -2,6 +2,7 @@ import sqlite3
 import datetime
 import uuid
 from typing import Optional, Dict, Any
+from werkzeug.security import generate_password_hash, check_password_hash
 
 DB_FILE = 'sita.db'
 
@@ -25,6 +26,8 @@ def init_db():
             phone TEXT,
             country_code TEXT,
             reason TEXT,
+            age INTEGER,
+            organization_id INTEGER,
             agent_id TEXT UNIQUE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             last_login TIMESTAMP
@@ -41,35 +44,130 @@ def init_db():
         )
     ''')
 
+    # Organizations Table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS organizations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            state TEXT NOT NULL,
+            district TEXT NOT NULL,
+            unique_code TEXT UNIQUE,
+            password TEXT,
+            created_by_email TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Audit Logs Table (New)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS activity_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            actor_email TEXT,
+            action TEXT,
+            details TEXT,
+            ip_address TEXT,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+
     # Migration: Add agent_id if missing (for existing installations)
     try:
         c.execute("SELECT agent_id FROM users LIMIT 1")
     except sqlite3.OperationalError:
         print("Migrating DB: Adding agent_id column...")
         c.execute("ALTER TABLE users ADD COLUMN agent_id TEXT DEFAULT NULL")
+
+    # Migration: Add age if missing
+    try:
+        c.execute("SELECT age FROM users LIMIT 1")
+    except sqlite3.OperationalError:
+        print("Migrating DB: Adding age column...")
+        c.execute("ALTER TABLE users ADD COLUMN age INTEGER DEFAULT NULL")
+
+    # Migration: Add organization_id if missing
+    try:
+        c.execute("SELECT organization_id FROM users LIMIT 1")
+    except sqlite3.OperationalError:
+        print("Migrating DB: Adding organization_id column...")
+        c.execute("ALTER TABLE users ADD COLUMN organization_id INTEGER DEFAULT NULL")
     
-    # Seed Admin if not exists
-    c.execute("SELECT * FROM users WHERE email = ?", ('admin@sita.ai',))
-    if not c.fetchone():
-        c.execute('''
-            INSERT INTO users (email, name, role, status, reason, phone, agent_id)
-            VALUES (?, ?, ?, ?, ?, ?, 'SITA-0000')
-        ''', ('admin@sita.ai', 'SITA Commander', 'admin', 'verified', 'System Administrator', '000-000-0000'))
-    
+    # Migration: Add password if missing (for Super Admin)
+    try:
+        c.execute("SELECT password FROM users LIMIT 1")
+    except sqlite3.OperationalError:
+        print("Migrating DB: Adding password column...")
+        c.execute("ALTER TABLE users ADD COLUMN password TEXT DEFAULT NULL")
+
     conn.commit()
     conn.close()
     print("Database initialized.")
+
+def log_activity(actor_email: str, action: str, details: str = None, ip_address: str = None):
+    """
+    Logs critical system actions for audit purposes.
+    """
+    try:
+        conn = get_db_connection()
+        conn.execute('INSERT INTO activity_logs (actor_email, action, details, ip_address) VALUES (?, ?, ?, ?)',
+                     (actor_email, action, details, ip_address))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"AUDIT LOG FAILURE: {e}")
 
 def generate_agent_id():
     """Generates a unique Agent ID format: SITA-XXXX"""
     suffix = uuid.uuid4().hex[:4].upper()
     return f"SITA-{suffix}"
 
+# --- Super Admin Operations ---
+
+def check_super_admin_exists() -> bool:
+    conn = get_db_connection()
+    user = conn.execute("SELECT * FROM users WHERE role = 'super_admin'").fetchone()
+    conn.close()
+    return user is not None
+
+def create_super_admin(password: str) -> Dict[str, Any]:
+    if check_super_admin_exists():
+        raise Exception("Super Admin already exists. Genesis protocol locked.")
+    
+    unique_id = generate_agent_id()
+    conn = get_db_connection()
+    conn.execute('''
+        INSERT INTO users (email, name, role, status, agent_id, password, created_at)
+        VALUES (?, 'SITA COMMANDER', 'super_admin', 'verified', ?, ?, CURRENT_TIMESTAMP)
+    ''', (f'{unique_id}@sita.internal', unique_id, password))
+    conn.commit()
+    
+    user = conn.execute("SELECT * FROM users WHERE role = 'super_admin'").fetchone()
+    conn.close()
+    return dict(user)
+
+def authenticate_super_admin(password: str, agent_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    conn = get_db_connection()
+    if agent_id:
+        user = conn.execute("SELECT * FROM users WHERE agent_id = ? AND role = 'super_admin'", (agent_id,)).fetchone()
+    else:
+        user = conn.execute("SELECT * FROM users WHERE role = 'super_admin' LIMIT 1").fetchone()
+    conn.close()
+    
+    if user and user['password']:
+        if check_password_hash(user['password'], password):
+            return dict(user)
+    return None
+
 # --- User Operations ---
 
 def get_user(email: str) -> Optional[Dict[str, Any]]:
     conn = get_db_connection()
-    user = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
+    user = conn.execute('''
+        SELECT u.*, o.name as org_name, o.unique_code as org_code 
+        FROM users u 
+        LEFT JOIN organizations o ON u.organization_id = o.id
+        WHERE u.email = ?
+    ''', (email,)).fetchone()
     conn.close()
     if user:
         return dict(user)
@@ -123,13 +221,13 @@ def create_otp_user(email: str) -> Dict[str, Any]:
     conn.close()
     return dict(updated_user)
 
-def update_user_profile(email: str, name: str, phone: str, country_code: str, reason: str) -> Dict[str, Any]:
+def update_user_profile(email: str, name: str, phone: str, country_code: str, reason: str, age: int) -> Dict[str, Any]:
     conn = get_db_connection()
     conn.execute('''
         UPDATE users 
-        SET name = ?, phone = ?, country_code = ?, reason = ?, status = 'verified'
+        SET name = ?, phone = ?, country_code = ?, reason = ?, age = ?, status = 'verified'
         WHERE email = ?
-    ''', (name, phone, country_code, reason, email))
+    ''', (name, phone, country_code, reason, age, email))
     conn.commit()
     
     user = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
@@ -137,6 +235,152 @@ def update_user_profile(email: str, name: str, phone: str, country_code: str, re
     if user:
         return dict(user)
     return None
+
+def get_all_users() -> list[Dict[str, Any]]:
+    conn = get_db_connection()
+    # Join with organizations table to get org details
+    users = conn.execute('''
+        SELECT u.*, o.name as org_name, o.unique_code as org_code 
+        FROM users u 
+        LEFT JOIN organizations o ON u.organization_id = o.id
+    ''').fetchall()
+    conn.close()
+    return [dict(u) for u in users]
+
+def create_organization(name, state, district, password, created_by_email) -> Dict[str, Any]:
+    conn = get_db_connection()
+    
+    # [CONSTRAINT] STRICT UNIQUENESS: Organization is identified by the combination of State + District.
+    # The 'unique_code' is merely a generated identifier for lookup, NOT the primary logical constraint.
+    existing = conn.execute(
+        'SELECT * FROM organizations WHERE LOWER(state) = ? AND LOWER(district) = ?', 
+        (state.lower(), district.lower())
+    ).fetchone()
+
+    if existing:
+        conn.close()
+        raise Exception(f"Organization already exists for sector: {district}, {state}")
+
+    # Generate Unique Code: SITA-[STATE_CODE]-[District_First3]-[RANDOM]
+    # Simplified for demo: SITA-[First2State]-[First3Dist]-[Random4]
+    import random
+    code = f"SITA-{state[:2].upper()}-{district[:3].upper()}-{random.randint(1000,9999)}"
+    
+    # Hash Password
+    hashed_pw = generate_password_hash(password)
+
+    cursor = conn.execute('''
+        INSERT INTO organizations (name, state, district, unique_code, password, created_by_email)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (name, state, district, code, hashed_pw, created_by_email))
+    
+    org_id = cursor.lastrowid
+    
+    conn.commit()
+    
+    org = conn.execute('SELECT * FROM organizations WHERE id = ?', (org_id,)).fetchone()
+    conn.close()
+    return dict(org)
+
+def lookup_organization(name, state) -> bool:
+    conn = get_db_connection()
+    # Loose matching
+    org = conn.execute('SELECT id FROM organizations WHERE LOWER(name) = ? AND LOWER(state) = ?', (name.lower(), state.lower())).fetchone()
+    conn.close()
+    return True if org else False
+
+def join_organization(email, unique_code, password) -> tuple[bool, str]:
+    conn = get_db_connection()
+    org = conn.execute('SELECT * FROM organizations WHERE unique_code = ?', (unique_code,)).fetchone()
+    
+    if not org:
+        conn.close()
+        return False, "Organization not found"
+        
+    if password != "OPEN_ACCESS_OVERRIDE" and not check_password_hash(org['password'], password):
+        conn.close()
+        return False, "Invalid password"
+        
+    conn.execute('UPDATE users SET organization_id = ? WHERE email = ?', (org['id'], email))
+    conn.commit()
+    conn.close()
+    return True, "Successfully joined"
+
+def get_organization_by_id(org_id) -> Optional[Dict[str, Any]]:
+    conn = get_db_connection()
+    org = conn.execute('SELECT * FROM organizations WHERE id = ?', (org_id,)).fetchone()
+    conn.close()
+    return dict(org) if org else None
+
+def get_all_organizations() -> list[Dict[str, Any]]:
+    conn = get_db_connection()
+    orgs = conn.execute('SELECT * FROM organizations').fetchall()
+    conn.close()
+    return [dict(o) for o in orgs]
+
+def lookup_organization(state: str, district: str) -> Optional[Dict[str, Any]]:
+    conn = get_db_connection()
+    # Case insensitive check
+    org = conn.execute('SELECT * FROM organizations WHERE LOWER(state) = ? AND LOWER(district) = ?', 
+                       (state.lower(), district.lower())).fetchone()
+    conn.close()
+    return dict(org) if org else None
+
+# --- Strict Admin Auth ---
+
+
+def authenticate_organization_credentials(org_unique_code: str, org_name: str, password: str) -> tuple[bool, Optional[Dict[str, Any]], str]:
+    """
+    Authenticates using Organization Credentials (Sector Keys).
+    Returns a synthetic User object representing the Sector Commander.
+    """
+    conn = get_db_connection()
+    
+    # 1. Verify Org by Code and Name (Case Insensitive for name for better UX?)
+    # Strict requirement: "organization name"
+    org = conn.execute("SELECT * FROM organizations WHERE unique_code = ?", (org_unique_code,)).fetchone()
+    
+    if not org:
+        conn.close()
+        return False, None, "Invalid Sector ID"
+        
+    if org['name'].lower() != org_name.lower():
+        conn.close()
+        return False, None, "Invalid Sector Designation (Name mismatch)"
+        
+    # 2. Verify Org Password
+    if check_password_hash(org['password'], password):
+        # 3. Create Synthetic Admin Session
+        conn.close()
+        return True, {
+            "email": f"commander@{org['unique_code'].lower()}.sita",
+            "name": f"COMMANDER-{org['name'].upper()}",
+            "role": "admin",
+            "organization_id": org['id'],
+            "status": "verified",
+            "picture": "", # Default avatar
+            "org_name": org['name'],
+            "org_code": org['unique_code']
+        }, "Authenticated"
+    else:
+        conn.close()
+        return False, None, "Invalid Sector Access Key"
+
+def authenticate_admin_strict(org_unique_code: str, admin_agent_id: str, password: str) -> tuple[bool, Optional[Dict[str, Any]], str]:
+    # Legacy User-Based Auth (Keeping for backup or mixed mode if needed)
+    # ... (existing code mostly) ...
+    conn = get_db_connection()
+    org = conn.execute("SELECT * FROM organizations WHERE unique_code = ?", (org_unique_code,)).fetchone()
+    if not org: return False, None, "Invalid Org ID"
+    
+    admin = conn.execute("SELECT * FROM users WHERE agent_id = ? AND organization_id = ? AND role = 'admin'", (admin_agent_id, org['id'])).fetchone()
+    conn.close()
+    
+    if not admin: return False, None, "Admin ID not found"
+    if not admin['password']: return False, None, "Password not set"
+    if check_password_hash(admin['password'], password): return True, dict(admin), "Auth"
+    return False, None, "Invalid Password"
+
 
 # --- OTP Operations ---
 

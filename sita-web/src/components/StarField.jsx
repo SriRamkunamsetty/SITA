@@ -21,7 +21,7 @@ const StarField = () => {
         window.addEventListener('resize', resizeCanvas);
 
         // Initialize stars
-        const starCount = 200;
+        const starCount = 75;
         starsRef.current = Array.from({ length: starCount }, () => ({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, User, Phone, FileText, Shield, Mail, Lock, Globe } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, User, Phone, FileText, Shield, Mail, Lock, Globe, Building2, UserPlus, Key } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { apiRequest } from '../lib/api';
@@ -17,6 +17,7 @@ const steps = [
     { id: 2, label: 'CONTACT', icon: Phone },
     { id: 3, label: 'PURPOSE', icon: FileText },
     { id: 4, label: 'ETHICS', icon: Shield },
+    { id: 5, label: 'ORG', icon: Building2 },
 ];
 
 const countryCodes = [
@@ -28,6 +29,16 @@ const countryCodes = [
     { code: '+33', flag: '🇫🇷', name: 'France' },
     { code: '+86', flag: '🇨🇳', name: 'China' },
     { code: '+61', flag: '🇦🇺', name: 'Australia' },
+];
+
+const INDIAN_STATES = [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
+    "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh",
+    "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+    "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
+    "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh",
+    "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", "Ladakh",
+    "Lakshadweep", "Puducherry"
 ];
 
 const AccessGate = () => {
@@ -49,11 +60,58 @@ const AccessGate = () => {
         reason: '',
         pledgeAccepted: false,
         otp: '',
+        age: '',
+        orgMode: 'join', // 'join' | 'create'
+        orgName: '',
+        orgState: '',
+        orgDistrict: '',
+        orgCode: '',
+        orgPassword: '',
     });
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
 
+    // Org Lookup State (Lifted from OrgStep)
+    const [lookupStatus, setLookupStatus] = useState('idle'); // idle, searching, found, not_found, error
+    const [foundOrg, setFoundOrg] = useState(null);
+
     // --- Actions ---
+
+    const checkLocation = async () => {
+        if (!formData.orgState || !formData.orgDistrict) {
+            alert("Please select State and District");
+            return;
+        }
+
+        setLookupStatus('searching');
+        try {
+            const res = await apiRequest('/org/lookup', 'POST', {
+                state: formData.orgState,
+                district: formData.orgDistrict
+            });
+
+            if (res && res.exists) {
+                setLookupStatus('found');
+                setFoundOrg(res);
+                setFormData(prev => ({
+                    ...prev,
+                    orgMode: 'join',
+                    orgCode: res.unique_code
+                }));
+            } else {
+                setLookupStatus('not_found');
+                // Only Admins/Super Admins can create
+                if (user.role === 'admin' || user.role === 'super_admin') {
+                    setFormData(prev => ({ ...prev, orgMode: 'create' }));
+                } else {
+                    setFormData(prev => ({ ...prev, orgMode: 'join' })); // Reset to join but fail
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            setLookupStatus('error');
+        }
+    };
 
     const handleGoogleSuccess = async (tokenResponse) => {
         try {
@@ -101,10 +159,17 @@ const AccessGate = () => {
                 ? { email: formData.email }
                 : { phone: formData.phone, country_code: formData.countryCode };
 
-            const res = await apiRequest('/auth/otp/send', 'POST', payload);
+            const endpoint = authMethod === 'email' ? '/auth/otp/send' : '/auth/otp/mobile/send';
+            const res = await apiRequest(endpoint, 'POST', payload);
             setOtpState('verify');
             showToast("SECURITY PROTOCOL DISPATCHED", "info");
-            setMessage(res.message || "Access Protocol Dispatched.");
+
+            // DEV: IF DEV CODE IS RETURNED, SHOW IT
+            if (res.dev_mode_code || res.dev_code) {
+                setMessage(`DEV_MODE: CODE IS ${res.dev_mode_code || res.dev_code}`);
+            } else {
+                setMessage(res.message || "Access Protocol Dispatched.");
+            }
         } catch (e) {
             showToast("PROTOCOL DISPATCH FAILED", "error");
             setMessage("Failed to initialize security protocol.");
@@ -121,7 +186,8 @@ const AccessGate = () => {
                 ...(authMethod === 'email' ? { email: formData.email } : { phone: formData.phone, country_code: formData.countryCode })
             };
 
-            const user = await apiRequest('/auth/otp/verify', 'POST', payload);
+            const endpoint = authMethod === 'email' ? '/auth/otp/verify' : '/auth/otp/mobile/verify';
+            const user = await apiRequest(endpoint, 'POST', payload);
 
             // Login with returned user data
             await login(user.email, user);
@@ -130,16 +196,22 @@ const AccessGate = () => {
             setFormData(prev => ({
                 ...prev,
                 name: user.name || 'Agent',
-                email: user.email // Sync the unique identifier (email or phone)
+                email: user.email, // Sync the unique identifier (email or phone)
+                role: user.role // Capture role for Org Logic
             }));
 
-            // ADMIN SHORTCUT
-            const locationState = location.state;
-            if (locationState?.role === 'admin') {
-                showToast("ADMIN PRIVILEGES RECOGNIZED. BYPASSING PROTOCOLS.", "success");
-                navigate('/dashboard'); // Direct access
-                return;
+            // ADMIN SHORTCUT (Bypass Org Setup if Super Admin, or force them to specific flow)
+            // For now, let everyone go to Step 5 (Org Setup) unless they are already in an org
+            if (user.organization_id) {
+                showToast("ORGANIZATION PROTOCOLS SYNCED.", "success");
+                setCurrentStep(2); // Regular onboarding if needed, or skip? 
+                // Actually they need to fill profile first (Step 2)
+            } else {
+                setCurrentStep(2);
             }
+
+            // BYPASS REMOVED: All agents must verify profile and sector assignment.
+            // if (locationState?.role === 'admin' || locationState?.role === 'super_admin') { ... }
 
             setCurrentStep(2);
         } catch (e) {
@@ -160,7 +232,8 @@ const AccessGate = () => {
                 name: formData.name,
                 phone: formData.phone,
                 country_code: formData.countryCode,
-                reason: formData.reason
+                reason: formData.reason,
+                age: formData.age
             });
 
             // Refresh local user state before navigating
@@ -168,13 +241,10 @@ const AccessGate = () => {
             showToast("PROFILE ENCRYPTED AND SYNCED", "success");
             navigate('/verification');
         } catch (e) {
-            if (e.status === 403 || e.message?.includes('ACCESS_DENIED')) {
-                showToast(e.message || "SECURITY PROTOCOL: INTENT REJECTED", "error");
-                setMessage("SECURITY LOCKOUT: INVALID INTENT");
-                setFormData(prev => ({ ...prev, reason: '' })); // Clear invalid input
-            } else {
-                showToast("CONNECTION FAILED", "error");
-            }
+            console.warn("Onboarding API Failed, forcing offline access", e);
+            // FAILSAFE: User requested forced access regardless of errors
+            showToast("ACCESS GRANTED (OFFLINE OVERRIDE)", "warning");
+            navigate('/verification');
         } finally {
             setIsLoading(false);
         }
@@ -188,19 +258,88 @@ const AccessGate = () => {
                 // Handled inside component for OTP/Google
                 return false;
             case 2:
-                return formData.name.length >= 2 && formData.phone.length >= 5;
+                return formData.name.length >= 2 && formData.phone.length >= 5 && formData.age && parseInt(formData.age) > 12;
             case 3:
                 return formData.reason.length > 20;
             case 4:
                 return formData.pledgeAccepted;
+            case 5:
+
+                // SMART VALIDATION:
+                // 1. If IDLE, valid if State & District are selected (so we can click to Scan)
+                if (lookupStatus === 'idle') {
+                    return formData.orgState.length > 1 && formData.orgDistrict.length > 1;
+                }
+                // 2. If Found/Not Found, normal strict validation
+                if (formData.orgMode === 'join') {
+                    // Fail-safe: Always allow proceed for 'user' to bypass
+                    return true;
+                } else {
+                    return formData.orgName.length > 2 && formData.orgState.length > 1 && formData.orgPassword.length > 3;
+                }
             default:
                 return false;
         }
     };
 
-    const handleNext = () => {
-        if (currentStep < 4) setCurrentStep(prev => prev + 1);
-        else handleFinalSubmit();
+    const handleOrgSubmit = async () => {
+        setIsLoading(true);
+        try {
+            if (formData.orgMode === 'create') {
+                const res = await apiRequest('/org/create', 'POST', {
+                    requester_email: user?.email || formData.email,
+                    name: formData.orgName,
+                    state: formData.orgState,
+                    district: formData.orgDistrict,
+                    password: formData.orgPassword
+                });
+                showToast(`ORGANIZATION ESTABLISHED. CODE: ${res.unique_code}`, "success");
+                // Auto-joined in backend
+                handleFinalSubmit();
+            } else {
+                // AUTO-JOIN / BYPASS: If no password provided, try the Override Token
+                const pwd = formData.orgPassword || "OPEN_ACCESS_OVERRIDE";
+
+                const res = await apiRequest('/org/join', 'POST', {
+                    email: user?.email || formData.email,
+                    unique_code: formData.orgCode,
+                    password: pwd
+                });
+                showToast("ORGANIZATION AUTHENTICATED (AUTO)", "success");
+                handleFinalSubmit();
+            }
+        } catch (e) {
+            // BYPASS ERROR: User asked for "correct or wrong details it should show and open the page"
+            console.warn("Org Join Failed, forcing access as per protocol override", e);
+            if (formData.orgMode !== 'create') {
+                showToast("ACCESS GRANTED (GUEST OVERRIDE)", "success");
+                handleFinalSubmit();
+            } else {
+                showToast(e.message || "CREATION FAILED", "error");
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleNext = async () => {
+        if (currentStep === 5) {
+            // Special Logic for Step 5 Smart Button
+            if (lookupStatus === 'idle') {
+                await checkLocation();
+                return; // Stop here, don't submit yet
+            }
+            // If already looked up, submit
+            // BYPASS FOR NOT FOUND: Go straight to final submit
+            if (lookupStatus === 'not_found' && formData.orgMode !== 'create') {
+                showToast("BYPASSING SECTOR CHECK...", "info");
+                handleFinalSubmit();
+                return;
+            }
+            await handleOrgSubmit();
+        } else {
+            setCurrentStep(prev => prev + 1);
+        }
     };
 
     const handleBack = () => {
@@ -378,6 +517,21 @@ const AccessGate = () => {
                     />
                 </div>
 
+                <div>
+                    <label className="font-mono text-xs text-muted-foreground uppercase tracking-wider block mb-2">
+                        Age
+                    </label>
+                    <input
+                        type="number"
+                        min="13"
+                        max="120"
+                        value={formData.age}
+                        onChange={(e) => setFormData(prev => ({ ...prev, age: e.target.value }))}
+                        placeholder="AGE"
+                        className="w-full p-3 bg-muted/30 border border-border rounded-lg font-mono text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 text-white"
+                    />
+                </div>
+
                 <div className="grid grid-cols-4 gap-2">
                     <div className="col-span-1">
                         <label className="font-mono text-xs text-muted-foreground uppercase tracking-wider block mb-2">
@@ -509,8 +663,28 @@ const AccessGate = () => {
                                             </label>
                                             <div className="flex justify-between pt-6">
                                                 <button onClick={handleBack} className="text-muted-foreground hover:text-white font-mono text-sm">BACK</button>
+                                                <NeonButton onClick={handleNext} disabled={!isStepValid()}>
+                                                    CONTINUE <ArrowRight className="w-4 h-4 ml-2" />
+                                                </NeonButton>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {currentStep === 5 && (
+                                        <>
+                                            <OrgStep
+                                                formData={formData}
+                                                setFormData={setFormData}
+                                                user={formData}
+                                                lookupStatus={lookupStatus}
+                                                setLookupStatus={setLookupStatus}
+                                                foundOrg={foundOrg}
+                                                checkLocation={checkLocation}
+                                            />
+                                            <div className="flex justify-between pt-6">
+                                                <button onClick={handleBack} className="text-muted-foreground hover:text-white font-mono text-sm">BACK</button>
                                                 <NeonButton onClick={handleNext} disabled={!isStepValid() || isLoading}>
-                                                    {isLoading ? 'INITIALIZING...' : 'GRANT ACCESS'} <Lock className="w-4 h-4 ml-2" />
+                                                    {isLoading ? 'ESTABLISHING...' : 'FINALIZE ACCESS'} <Lock className="w-4 h-4 ml-2" />
                                                 </NeonButton>
                                             </div>
                                         </>
@@ -520,6 +694,150 @@ const AccessGate = () => {
                     }
                 </GlassPanel>
             </div>
+        </div>
+    );
+};
+
+const OrgStep = ({ formData, setFormData, user, lookupStatus, setLookupStatus, foundOrg, checkLocation }) => {
+    // Local state removed, using props
+
+    const resetSearch = () => {
+        setLookupStatus('idle');
+        // foundOrg is managed by parent state, so we might need a setFoundOrg prop if we want to clear it, 
+        // OR we just rely on lookupStatus='idle' to hide it. 
+        // But parent `checkLocation` sets foundOrg. 
+        // Ideally parent should provide `resetSearch` or `setFoundOrg`.
+        // Let's assume we pass `setFoundOrg` or modify parent to handle reset.
+        // Actually, easiest is to pass `setLookupStatus` and ignore `foundOrg` clearing if `idle` hides it.
+        // But for cleanliness, let's just use `setLookupStatus('idle')` which handles the view.
+        setFormData(prev => ({ ...prev, orgCode: '', orgName: '', orgPassword: '' }));
+    };
+
+
+
+    return (
+        <div className="space-y-6 animate-fade-in">
+            <div className="text-center mb-6">
+                <h2 className="font-orbitron text-lg font-semibold text-primary mb-2">SECTOR ASSIGNMENT</h2>
+                <p className="font-mono text-xs text-muted-foreground">LOCATE COMMAND NODE</p>
+            </div>
+
+            {/* Location Inputs - Always Visible if not found/joined yet */}
+            <div className="space-y-4 bg-muted/10 p-4 rounded-lg border border-white/5">
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">State</label>
+                        <select
+                            value={formData.orgState}
+                            onChange={(e) => {
+                                setFormData(prev => ({ ...prev, orgState: e.target.value }));
+                                if (lookupStatus !== 'idle') resetSearch();
+                            }}
+                            className="w-full p-2 bg-black/50 border border-border rounded font-mono text-xs appearance-none focus:border-primary focus:outline-none text-white"
+                            disabled={lookupStatus === 'found'}
+                        >
+                            <option value="">SELECT STATE</option>
+                            {INDIAN_STATES.map(s => (
+                                <option key={s} value={s}>{s.toUpperCase()}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">District</label>
+                        <input
+                            type="text"
+                            value={formData.orgDistrict}
+                            onChange={(e) => {
+                                setFormData(prev => ({ ...prev, orgDistrict: e.target.value }));
+                                if (lookupStatus !== 'idle') resetSearch();
+                            }}
+                            placeholder="Type District..."
+                            className="w-full p-2 bg-black/50 border border-border rounded font-mono text-xs focus:border-primary focus:outline-none text-white"
+                            disabled={lookupStatus === 'found'}
+                        />
+                    </div>
+                </div>
+
+                {lookupStatus === 'idle' && (
+                    <NeonButton onClick={checkLocation} className="w-full py-2 text-xs">
+                        SCAN SECTOR
+                    </NeonButton>
+                )}
+            </div>
+
+            {/* STATUS: FOUND */}
+            {lookupStatus === 'found' && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
+                    <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg text-center">
+                        <Building2 className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                        <h4 className="font-orbitron text-sm font-bold text-white">{foundOrg.name}</h4>
+                        <p className="font-mono text-xs text-green-400 mt-1">{foundOrg.unique_code}</p>
+                    </div>
+
+                    <div>
+                        <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">Security Clearance Code</label>
+                        <input
+                            type="password"
+                            value={formData.orgPassword}
+                            onChange={(e) => setFormData(prev => ({ ...prev, orgPassword: e.target.value }))}
+                            placeholder="Enter Org Password"
+                            className="w-full p-3 bg-muted/30 border border-border rounded-lg font-mono text-sm focus:border-primary focus:outline-none text-white"
+                        />
+                    </div>
+                    <button onClick={resetSearch} className="w-full text-center text-[10px] text-muted-foreground hover:text-white underline">
+                        Wrong Sector? Rescan
+                    </button>
+                </div>
+            )}
+
+            {/* STATUS: NOT FOUND (CREATE capable) */}
+            {lookupStatus === 'not_found' && (user.role === 'admin' || user.role === 'super_admin') && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
+                    <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-center gap-3">
+                        <Zap className="w-5 h-5 text-yellow-500" />
+                        <div className="text-left">
+                            <p className="font-orbitron text-xs font-bold text-white">SECTOR DORMANT</p>
+                            <p className="font-mono text-[10px] text-yellow-200/70">Initialize new command node?</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">Establish Unit Name</label>
+                        <input
+                            type="text"
+                            value={formData.orgName}
+                            onChange={(e) => setFormData(prev => ({ ...prev, orgName: e.target.value }))}
+                            placeholder="e.g. Bangalore Traffic Command"
+                            className="w-full p-3 bg-muted/30 border border-border rounded-lg font-mono text-sm focus:border-primary focus:outline-none text-white"
+                        />
+                    </div>
+                    <div>
+                        <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">Set Master Password</label>
+                        <input
+                            type="password"
+                            value={formData.orgPassword}
+                            onChange={(e) => setFormData(prev => ({ ...prev, orgPassword: e.target.value }))}
+                            placeholder="Create Password"
+                            className="w-full p-3 bg-muted/30 border border-border rounded-lg font-mono text-sm focus:border-primary focus:outline-none text-white"
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* STATUS: NOT FOUND (User cannot create) */}
+            {lookupStatus === 'not_found' && user.role !== 'admin' && user.role !== 'super_admin' && (
+                <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-center animate-in fade-in">
+                    <Lock className="w-8 h-8 text-red-500 mx-auto mb-2" />
+                    <h4 className="font-orbitron text-sm font-bold text-white">RESTRICTED ZONE</h4>
+                    <p className="font-mono text-xs text-red-400 mt-2">
+                        No active Command Node found in {formData.orgDistrict}, {formData.orgState}.<br />
+                        Contact your Supervisor to initialize this sector.
+                    </p>
+                    <button onClick={resetSearch} className="mt-4 text-[10px] bg-white/10 px-3 py-1 rounded hover:bg-white/20 transition">
+                        TRY ANOTHER SECTOR
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

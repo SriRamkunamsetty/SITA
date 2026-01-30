@@ -3,8 +3,10 @@ import { AnimatePresence } from 'framer-motion';
 import Experience from './pages/Experience';
 import AccessGate from './pages/AccessGate';
 import Verification from './pages/Verification';
-import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile';
+
+import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import UserDashboard from './pages/UserDashboard';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import StarField from './components/ui/StarField';
 import { ToastProvider } from './context/ToastContext';
@@ -34,18 +36,34 @@ function App() {
 
               {/* Protected Routes */}
               <Route
-                path="/dashboard"
+                path="/agent"
                 element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <UserDashboard />
                   </ProtectedRoute>
                 }
               />
               <Route
-                path="/profile"
+                path="/dashboard"
                 element={
                   <ProtectedRoute>
-                    <Profile />
+                    <UserDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/super-admin"
+                element={
+                  <ProtectedRoute>
+                    <SuperAdminDashboard />
                   </ProtectedRoute>
                 }
               />

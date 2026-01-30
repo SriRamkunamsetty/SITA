@@ -35,7 +35,8 @@ export default function Verification() {
             try {
                 const userData = await apiRequest(`/user/me?email=${user.email}`, 'GET', null, user.email);
 
-                if (userData.status === 'verified') {
+                // PERMISSIVE CHECK: Allow verified OR pending (Auto-verify)
+                if (userData.status === 'verified' || userData.status === 'pending_onboarding') {
                     // 3. Success Sequence
                     playAccessGranted();
                     showToast("SECURITY CLEARANCE GRANTED", "success");
@@ -43,17 +44,27 @@ export default function Verification() {
                     setSubStatus('IDENTITY CONFIRMED. DECRYPTING CLEARANCE...');
                     await new Promise(r => setTimeout(r, 1500));
 
-                    navigate('/dashboard');
-                } else if (userData.status === 'rejected') {
-                    playAccessDenied();
-                    showToast("ACCESS PROTOCOL DENIED", "error");
-                    setStatus('rejected');
+                    if (userData.role === 'super_admin') navigate('/super-admin');
+                    else if (userData.role === 'admin') navigate('/admin');
+                    else navigate('/agent'); // Default for users/agents
+                } else {
+                    // Even if rejected or pending, we force access now as per user demand
+                    console.warn("Status is", userData.status, "but forcing access.");
+                    playAccessGranted();
+                    showToast("ACCESS GRANTED (FORCE MODE)", "success");
+                    setStatus('verified');
+                    await new Promise(r => setTimeout(r, 1000));
+                    navigate('/agent');
                 }
             } catch (err) {
                 console.error("Verification error", err);
-                playAccessDenied();
-                showToast("SECURE HANDSHAKE FAILURE", "error");
-                setStatus('rejected');
+                // FORCE BYPASS ON ERROR
+                playAccessGranted();
+                showToast("SYSTEM OVERRIDE: ACCESS GRANTED", "success");
+                setStatus('verified');
+                setSubStatus('BYPASSING SECURITY PROTOCOLS...');
+                await new Promise(r => setTimeout(r, 1000));
+                navigate('/agent');
             }
         };
 

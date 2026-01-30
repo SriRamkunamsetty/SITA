@@ -30,8 +30,11 @@ class VehicleData:
 class SITAProcessor:
     def __init__(self):
         logger.info("Initializing SITA Processor (VIVA-SAFE)...")
+        print("DEBUG: Loading YOLO Model...")
         self.model = YOLO("yolov8s.pt") 
+        print("DEBUG: YOLO Loaded. Initializing OCR...")
         self.reader = easyocr.Reader(['en'], gpu=False)
+        print("DEBUG: OCR Initialized.")
         self.tracks = {}
 
     def detect_color(self, crop):
@@ -67,7 +70,7 @@ class SITAProcessor:
     def detect_plate(self, crop, frame_width):
         if crop.size == 0: return "Not Detected"
         h, w, _ = crop.shape
-        if w < (frame_width * 0.10): return "Not Detected"
+        if w < (frame_width * 0.05): return "Not Detected"
 
         # Expand Crop Rule: Start at 40% height, End at 85%
         p_y1, p_y2 = int(h * 0.40), int(h * 0.85)
@@ -108,6 +111,7 @@ class SITAProcessor:
         w_orig = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         h_orig = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = int(cap.get(cv2.CAP_PROP_FPS)) or 30
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         
         # PERFORMANCE: 1020px limit
         scale = 1.0
@@ -117,102 +121,136 @@ class SITAProcessor:
         else:
             w_out, h_out = w_orig, h_orig
 
-        fourcc = cv2.VideoWriter_fourcc(*'avc1')
-        out = cv2.VideoWriter(output_video_path, fourcc, fps, (w_out, h_out))
-        if not out.isOpened():
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        # CODEC FIX: Use VP9 (WebM) for browser compatibility.
+        try:
+            fourcc = cv2.VideoWriter_fourcc(*'vp09') # VP9
             out = cv2.VideoWriter(output_video_path, fourcc, fps, (w_out, h_out))
+            if not out.isOpened():
+                print("DEBUG: VP9 Failed, trying VP8...")
+                fourcc = cv2.VideoWriter_fourcc(*'vp80') # VP8
+                out = cv2.VideoWriter(output_video_path, fourcc, fps, (w_out, h_out))
+            
+            if not out.isOpened():
+                # Last resort fallback
+                print("DEBUG: VP8 Failed, trying mp4v fallback...")
+                fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                out = cv2.VideoWriter(output_video_path, fourcc, fps, (w_out, h_out))
+        except Exception as e:
+            logger.error(f"VideoWriter Init Failed: {e}")
+            raise e
 
         self.tracks = {}
         with open(output_csv_path, 'w', newline='') as f:
-            csv.writer(f).writerow(["vehicle_type", "color", "number_plate", "frame"])
+            csv.writer(f).writerow(["vehicle_type", "color", "number_plate", "confidence", "frame"])
 
         frame_idx = 0
-        counters = {"total": 0, "cars": 0, "bikes": 0, "trucks": 0}
-        frame_skip = 2 # Process every 2nd frame for 2x speedup
+        counters = {"total": 0, "cars": 0, "bikes": 0, "trucks": 0, "progress": 0}
+        frame_skip = 5
+        
+        try:
+            while True:
+                ret, frame = cap.read()
+                if not ret: break
+                frame_idx += 1
+                
+                # PROGRESS LOGIC
+                if frame_idx % 10 == 0:
+                    logger.info(f"DEBUG: Processing Frame {frame_idx}")
+                    if total_frames > 0:
+                        progress = int((frame_idx / total_frames) * 100)
+                        if progress > 99: progress = 99 
+                    else:
+                        progress = 50 
+                    
+                    counters["progress"] = progress
+                    if update_callback: update_callback(counters)
+                
+                # Optimized Output
+                if frame_idx % frame_skip != 0:
+                    out.write(cv2.resize(frame, (w_out, h_out)))
+                    continue
 
-        while True:
-            ret, frame = cap.read()
-            if not ret: break
-            frame_idx += 1
-            if frame_idx % 10 == 0:
-                logger.info(f"DEBUG: Processing Frame {frame_idx}")
-            
-            # Use original frame for output, but skipped inference
-            if frame_idx % frame_skip != 0:
-                out.write(cv2.resize(frame, (w_out, h_out)))
-                continue
+                if scale != 1.0: frame = cv2.resize(frame, (w_out, h_out))
+                
+                try:
+                    results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", 
+                                             classes=[2, 3, 7], imgsz=320, verbose=False)
+                    
+                    frame_ids = []
+                    for r in results:
+                        if r.boxes.id is not None:
+                            boxes, ids, clss, confs = r.boxes.xyxy.cpu().numpy(), r.boxes.id.cpu().numpy(), r.boxes.cls.cpu().numpy(), r.boxes.conf.cpu().numpy()
+                            for box, tid, cid, conf in zip(boxes, ids, clss, confs):
+                                tid = int(tid)
+                                frame_ids.append(tid)
+                                if tid not in self.tracks: 
+                                    v_obj = VehicleData(int(cid), box)
+                                    v_obj.confidence = float(conf)
+                                    self.tracks[tid] = v_obj
+                                v = self.tracks[tid]
+                                v.frames_seen += 1
+                                v.last_seen_frame = frame_idx
+                                
+                                x1, y1, x2, y2 = map(int, box)
+                                crop = frame[y1:y2, x1:x2]
 
-            if scale != 1.0: frame = cv2.resize(frame, (w_out, h_out))
-            
-            # Limit inference resolution explicitly for speed
-            results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", 
-                                     classes=[2, 3, 7], imgsz=640, verbose=False)
-            
-            frame_ids = []
-            for r in results:
-                if r.boxes.id is not None:
-                    boxes, ids, clss = r.boxes.xyxy.cpu().numpy(), r.boxes.id.cpu().numpy(), r.boxes.cls.cpu().numpy()
-                    for box, tid, cid in zip(boxes, ids, clss):
-                        tid = int(tid)
-                        frame_ids.append(tid)
-                        if tid not in self.tracks: self.tracks[tid] = VehicleData(int(cid), box)
-                        v = self.tracks[tid]
-                        v.frames_seen += 1
-                        v.last_seen_frame = frame_idx
-                        
-                        x1, y1, x2, y2 = map(int, box)
-                        crop = frame[y1:y2, x1:x2]
+                                # LOGIC: Count & Color
+                                if not v.locked and v.frames_seen == 5:
+                                    v.locked = True
+                                    v.color = self.detect_color(crop)
+                                    counters["total"] += 1
+                                    if v.type_str == "Car": counters["cars"] += 1
+                                    elif v.type_str == "Bike": counters["bikes"] += 1
+                                    elif v.type_str == "Truck": counters["trucks"] += 1
+                                    if update_callback: update_callback(counters)
 
-                        # COUNTING (Frame 5)
-                        if not v.locked and v.frames_seen == 5:
-                            v.locked = True
-                            v.color = self.detect_color(crop) # Lock color at same time
-                            counters["total"] += 1
-                            if v.type_str == "Car": counters["cars"] += 1
-                            elif v.type_str == "Bike": counters["bikes"] += 1
-                            elif v.type_str == "Truck": counters["trucks"] += 1
-                            if update_callback: update_callback(counters)
+                                # LOGIC: OCR
+                                if not v.plate_locked and v.ocr_attempts < 5:
+                                    if v.frames_seen >= 5 and v.frames_seen % 10 == 0:
+                                        v.ocr_attempts += 1
+                                        res = self.detect_plate(crop, w_out)
+                                        if res != "Not Detected":
+                                            v.plate = res
+                                            v.plate_locked = True
+                                            with open(output_csv_path, 'a', newline='') as f:
+                                                csv.writer(f).writerow([v.type_str, v.color, v.plate, f"{v.confidence:.2f}", frame_idx])
+                                                v.csv_written = True
 
-                        # OCR (Throttled 10, Capped 5)
-                        if not v.plate_locked and v.ocr_attempts < 5:
-                            if v.frames_seen >= 5 and v.frames_seen % 10 == 0:
-                                v.ocr_attempts += 1
-                                res = self.detect_plate(crop, w_out)
-                                if res != "Not Detected":
-                                    v.plate = res
-                                    v.plate_locked = True
-                                    # Write CSV Immediately if plate found
-                                    with open(output_csv_path, 'a', newline='') as f:
-                                        csv.writer(f).writerow([v.type_str, v.color, v.plate, frame_idx])
-                                        v.csv_written = True
+                                # DRAWING
+                                color = (0, 255, 0)
+                                lbl = "Vehicle"
+                                if v.plate_locked: color, lbl = (0, 255, 255), v.plate
+                                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+                                (tw, th), _ = cv2.getTextSize(lbl, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
+                                cv2.rectangle(frame, (x1, y1-20), (x1+tw, y1), color, -1)
+                                cv2.putText(frame, lbl, (x1, y1-5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,0), 2)
+                                
+                except Exception as e:
+                    logger.error(f"Frame {frame_idx} Inference Failed: {e}")
+                    
+                out.write(frame)
+                
+                # Cleanup Old Tracks
+                for tid, v in self.tracks.items():
+                    if tid not in frame_ids and v.locked and not v.csv_written:
+                        if (frame_idx - v.last_seen_frame) > 15:
+                            with open(output_csv_path, 'a', newline='') as f:
+                                csv.writer(f).writerow([v.type_str, v.color, v.plate, f"{v.confidence:.2f}", frame_idx])
+                                v.csv_written = True
 
-                        # DRAWING
-                        color = (0, 255, 0)
-                        lbl = "Vehicle"
-                        if v.plate_locked: color, lbl = (0, 255, 255), v.plate
-                        cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                        (tw, th), _ = cv2.getTextSize(lbl, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
-                        cv2.rectangle(frame, (x1, y1-20), (x1+tw, y1), color, -1)
-                        cv2.putText(frame, lbl, (x1, y1-5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,0), 2)
-
-            out.write(frame)
-            
-            # STALE TRACK CLEANUP
+            # Final Flush
             for tid, v in self.tracks.items():
-                if tid not in frame_ids and v.locked and not v.csv_written:
-                    if (frame_idx - v.last_seen_frame) > 15:
-                        with open(output_csv_path, 'a', newline='') as f:
-                            csv.writer(f).writerow([v.type_str, v.color, v.plate, frame_idx])
-                            v.csv_written = True
+                if v.locked and not v.csv_written:
+                    with open(output_csv_path, 'a', newline='') as f:
+                        csv.writer(f).writerow([v.type_str, v.color, v.plate, f"{v.confidence:.2f}", frame_idx])
+                        v.csv_written = True
 
-        # FINAL FLUSH
-        for tid, v in self.tracks.items():
-            if v.locked and not v.csv_written:
-                with open(output_csv_path, 'a', newline='') as f:
-                    csv.writer(f).writerow([v.type_str, v.color, v.plate, frame_idx])
-                    v.csv_written = True
-
-        cap.release()
-        out.release()
+        except Exception as main_e:
+            logger.error(f"Critical Processing Error: {main_e}")
+            raise main_e
+        finally:
+            print(f"DEBUG: Finalizing Video. Total Frames: {frame_idx}")
+            cap.release()
+            out.release()
+            
         return counters

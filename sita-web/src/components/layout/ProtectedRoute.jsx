@@ -17,10 +17,11 @@ export default function ProtectedRoute({ children }) {
     }
 
     if (!user) {
-        return <Navigate to="/access" state={{ from: location }} replace />;
+        return <Navigate to="/" state={{ from: location }} replace />;
     }
 
-    if (user.status !== 'verified') {
+    // Admins and Super Admins bypass verification check (they are verified by credentials)
+    if (user.role !== 'admin' && user.role !== 'super_admin' && user.status !== 'verified') {
         return <Navigate to="/verification" replace />;
     }
 

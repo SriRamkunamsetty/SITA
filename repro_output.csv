@@ -1,0 +1,7 @@
+vehicle_type,color,number_plate,confidence,frame
+Car,Gray,Not Detected,0.40,85
+Car,Gray,Not Detected,0.79,103
+Car,White,Not Detected,0.66,103
+Car,Gray,Not Detected,0.56,103
+Truck,Gray,Not Detected,0.33,103
+Car,Gray,Not Detected,0.31,103
