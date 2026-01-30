@@ -1,104 +1,145 @@
 # SITA: SMART INTELLIGENT TRAFFIC ANALYZER 🚀
 ### **[ ANTIGRAVITY-SCALE INTELLIGENCE CORE ]**
 
-SITA is a production-grade, futuristic traffic analytics platform designed for the next generation of urban surveillance. It combines cutting-edge Computer Vision (YOLOv11) with a cinematic, highly secure user experience known as the **"Antigravity Experience."**
+> **CURRENT VERSION**: 2.1.0 (Genesis Build)
+> **STATUS**: PRODUCTION READY
+
+SITA is a production-grade, enterprise-scale traffic analytics platform designed for the next generation of urban surveillance. It combines cutting-edge Computer Vision (YOLOv11+OCR) with a cinematic, highly secure user experience known as the **"Antigravity Experience."**
+
+Unlike traditional dashboards, SITA isolates the operator in a deep-focus environment using 3D spatial audio, glassmorphism UI, and motion-reactive elements.
 
 ---
 
 ## 🌌 The Design Philosophy: "Antigravity"
 SITA is not just a tool; it's an immersive experience. The frontend (React/Vite) is built with a deep-space aesthetic, featuring:
-- **Cinematic Depth**: Parallax starfields, glassmorphism panels, and 3D motion illusions.
+
+- **Cinematic Depth**: Parallax starfields (`StarField.jsx`), glassmorphism panels, and 3D motion illusions using **Framer Motion**.
 - **High-Fidelity Interaction**: Smooth transitions, glitch-effect verifications, and custom audio feedback via the Web Audio API.
 - **Agent Focus**: A streamlined, sidebar-free dashboard designed for maximum visual focus on neural data feeds.
 
 ---
 
-## 🛠 Tech Stack & Architecture
+## 🛠 System Architecture & Tech Stack
 
-### **Frontend Integration (The Command Center)**
-- **Framework**: React 18 with Vite (Ultra-fast HMR).
-- **Styling**: Tailored Tailwind CSS with a custom "Deep Space" palette (`brand-dark`, `brand-neon`).
-- **Animations**: Framer Motion for sophisticated UI choreography.
-- **Icons**: Lucide-React for crisp, vector-based iconography.
-- **State Management**: React Context (Auth, Toast notifications).
+### **1. The Command Center (Frontend)**
+The interface is a Single Page Application (SPA) built for speed and visual fidelity.
+- **Core**: React 18 + Vite (Ultra-fast HMR).
+- **Styling**: Tailwind CSS with a custom "Deep Space" palette (`brand-dark`, `brand-neon`).
+- **State Machine**: React Context API handling global `AuthContext` (Session Claims) and `ToastContext` (System Feedback).
+- **Security**: `ProtectedRoute.jsx` acts as a client-side firewall, validating RBAC claims before rendering routes.
 
-### **Backend Core (The Neural Hub)**
-- **Engine**: Flask (Python) with Threaded Multi-Job support.
-- **Vision Engine**: **YOLOfier-v11** optimized for vehicle detection and persistent tracking.
-- **OCR Engine**: Multi-pass EasyOCR with dynamic plate localized frames.
-- **Database**: SQLite with unique Agent ID generation (`SITA-XXXX`).
+### **2. The Neural Hub (Backend)**
+The brain of SITA is a high-performance Flask application designed for non-blocking inference.
+- **Engine**: Flask (Python 3.9+) with **Threaded Multi-Job** support.
+- **Vision Core**:
+    - **Detector**: `Ultralytics YOLOv11` (Optimized `yolov8s.pt` model) for vehicle tracking.
+    - **Tracker**: `ByteTrack` algorithm for persistent object ID retention across frames.
+    - **OCR**: `EasyOCR` with license plate localization and confidence thresholding (Score > 0.15).
+- **Database**: SQLite3 (`sita.db`) with relational mapping for Users, Organizations, and OTP Codes.
 
 ---
 
-## 🚀 Key Features
+## 🚀 Deep Dive: How It Works
 
-### **1. Secure Identity Gate**
-- **Dual Authenticator**: Access via **Google OAuth 2.0** or **Secure Email OTP**.
-- **Multi-Step Onboarding**: Automated agent registration covering identity, contact, purpose, and ethics compliance.
-- **Identity Encryption**: Every agent is assigned a permanent, unique `SITA-XXXX` identifier.
+### **1. The Video Processing Pipeline (Process-Flow)**
+The core value of SITA is its ability to ingest raw footage and convert it into structured intelligence. Here is the exact technical lifecycle of a video file:
 
-### **2. Auto-Verification Protocol**
-- **Real-time Handshake**: A dedicated verification stage that polls the backend to confirm agent status.
-- **Cinematic Verification**: Visual "Unlock" sequences with system sound feedback.
+1.  **Ingestion & Hashing**:
+    -   User uploads a video via the Drag-and-Drop zone (`GlassPanel`).
+    -   Backend validates file integrity and generates a unique `UUID` Job ID.
+    -   Video is stored in `uploads/` and a background thread is spawned (`app.py:background_process`).
 
-### **3. Advanced Vision Analytics Hub**
-- **Live Detection Feed**: Drag-and-drop video ingestion with real-time progress streaming.
-- **Neural Counters**: Live tracking of Car, Bike, and Truck metrics (Buses excluded per protocol).
-- **Master Detection Log**: A high-density table featuring Plate ID, Confidence, Vehicle Type, and Color.
-- **Integrated Playback**: Post-analysis, the system automatically swaps the scan-placeholder for the **actual processed video file**.
+2.  **Neural Analysis (Frame-by-Frame)**:
+    -   **Preprocessing**: Frames are resized to a max width of 1020px to balance accuracy and speed.
+    -   **Inference**: YOLO detects objects (Cars, Bikes, Trucks).
+    -   **Tracking**: Each object is assigned a persistent ID. If an object is seen for 5 consecutive frames, it is "Locked" and counted.
+    -   **Color Logic**: HSV Color Space analysis determines the dominant color (Red, Blue, Black, White, etc.).
 
-### **4. Investigative Reporting**
-- **Smart Filters**: Real-time searching across the entire detection log.
-- **Report Hub**: One-click **EXPORT DATA** to professional CSV format for offline analysis.
-- **Scroll Navigation**: Integrated "Quick-Jump" features for fluid navigation between the vision feed and data logs.
+3.  **Universal Transcoding (CRITICAL)**:
+    -   *Problem*: Browser support for `.avi` or raw `mp4` codecs (like `mp4v`) is inconsistent.
+    -   *Solution*: The pipeline automatically transcodes the output video to **VP9 (WebM)**.
+    -   *Why?*: VP9 is supported natively by all modern browsers (Chrome, Edge, Firefox) without plugins, ensuring 100% playback reliability.
+
+4.  **Data Serialization**:
+    -   Detections are written to a CSV file in real-time.
+    -   Once complete, the frontend swaps the "Scanning" placeholder for the actual processed video.
+
+### **2. Role-Based Access Control (RBAC)**
+SITA employs a strict 3-tier hierarchy enforced by the `@require_role` decorator in Flask and `ProtectedRoute` in React.
+
+| Role | Designation | Responsibilities |
+| :--- | :--- | :--- |
+| **Super Admin** | `SITA COMMANDER` | The "God Mode" of the system. Can create Organizations (Sectors), manage global configurations, and audit all logs. Restricted from operational dashboards to maintain governance focus. |
+| **Organization Admin** | `SECTOR COMMANDER` | The Head of a Department (e.g., "NAMPALLY POLICE"). Manages agents within their sector. Can view all operational data for their specific organization. |
+| **Agent (User)** | `OPERATIVE` | The field user. Has access to the **Detection Dashboard** to run analysis video files. Can only see their own data. |
+
+### **3. Organization Governance**
+SITA is multi-tenant by design.
+-   **Creation**: Only Super Admins can commission new Sectors.
+-   **Unique Identity**: Each organization gets a unique, cryptographically generated code (e.g., `SITA-TG-HYD-8392`).
+-   **Joining**: Users can join an organization by providing the Unique Code and the Sector Access Key (Password).
 
 ---
 
 ## 🛡 System Robustness & Security
 SITA is built for enterprise stability:
-- **Kernel Panic Protection**: Global `ErrorBoundary` catches unexpected React crashes and displays a custom failure recovery screen.
-- **Interactive Protocols**: System-wide `Toast` system provides agents with immediate feedback on all critical API and neutral engine actions.
-- **Automated Maintenance**: A backend **Storage Audit** routine purges temporary data on startup to maintain system peak performance.
-- **Secure Identity Gate**: Requests are validated against unique agent sessions to ensure data integrity.
+-   **Kernel Panic Protection**: Global `ErrorBoundary` catches unexpected React crashes and displays a custom failure recovery screen.
+-   **Audit Trails**: Every critical action (Login, Upload, Ban) is logged in the `activity_logs` table with IP address and User ID.
+-   **Automated Maintenance**: A backend **Storage Audit** routine (`cleanup_temp_folders`) purges temporary upload/download artifacts on every server startup to prevent disk bloat.
+-   **Secure Identity Gate**: Requests are validated against unique agent sessions (JWT/Session Tokens) to ensure data integrity.
 
 ---
 
-## 🛠️ Setup & Installation
+## 🛠️ Setup & Installation Guide
 
 ### **1. Prerequisites**
-- Python 3.9+
-- Node.js 16+
-- npm 7+
+-   **Python 3.9+** (Required for PyTorch/Ultralytics)
+-   **Node.js 16+** (Required for Vite)
+-   **FFmpeg** (Optional, but recommended for advanced transcoding)
 
 ### **2. Neural Core (Backend) Setup**
 ```bash
-# Navigate to root
-# (Recommended) Create a virtual environment
-python -m venv .venv
-source .venv/bin/activate  # Windows: .\.venv\Scripts\activate
+# 1. Navigate to project root
+cd SITA
 
-# Install AI dependencies
-pip install ultralytics flask flask-cors opencv-python easyocr lapx numpy
+# 2. Create Virtual Environment (Recommended)
+python -m venv .venv
+# Windows
+.\.venv\Scripts\activate
+# Mac/Linux
+source .venv/bin/activate
+
+# 3. Install AI Dependencies
+pip install -r requirements.txt
+# If not present, install manually:
+pip install ultralytics flask flask_cors opencv-python easyocr lapx numpy colorama
+
+# 4. Initialize Database & Run Server
 python app.py
 ```
+*Server will start on `http://0.0.0.0:7860`*
 
 ### **3. Command Center (Frontend) Setup**
 ```bash
+# 1. Navigate to frontend directory
 cd sita-web
+
+# 2. Install Node Modules
 npm install
+
+# 3. Ignite the Interface
 npm run dev
 ```
+*Client will launch on `http://localhost:5173`*
 
 ---
 
-## 🗺️ Project Journey (Development Process)
-SITA's development followed a rigorous 13-phase implementation plan:
-1. **Foundation**: Established the dual-repo architecture and reference designs.
-2. **Auth Engineering**: Built the SQL-backed Google/OTP authentication engine.
-3. **Identity Design**: Created the agent profiling and unique tracking system.
-4. **Dashboard Revolution**: Redesigned the UI into a full-width "Antigravity" focus.
-5. **Vision Integration**: Connected real-time neural analysis feeds to the React frontend.
-6. **Reporting & Polish**: Implemented video playback, CSV exports, and global robustness guardrails.
+## 🧪 Troubleshooting & Utilities
+We have included specialized scripts for system maintenance:
+
+-   `clean_admin.py`: **EMERGENCY RESET**. Deletes the Super Admin account if the password is lost.
+-   `fix_org_schema.py`: Repairs the database schema if the `organizations` table is missing columns.
+-   `verify_db.py`: Runs a quick health check on the SQLite database.
 
 ---
 
