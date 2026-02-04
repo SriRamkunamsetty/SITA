@@ -78,31 +78,61 @@ class SITAProcessor:
         plate_crop = crop[p_y1:p_y2, p_x1:p_x2]
         if plate_crop.size == 0: return "Not Detected"
 
-        # Dynamic Padding (1% of frame width)
+        # Dynamic Padding
         pad = max(5, int(frame_width * 0.01))
         plate_crop = cv2.copyMakeBorder(plate_crop, pad, pad, pad, pad, cv2.BORDER_CONSTANT, value=(0,0,0))
 
-        # OCR Preprocessing (Grayscale first)
+        # Preprocessing: Grayscale -> Bilateral -> Resize
         gray = cv2.cvtColor(plate_crop, cv2.COLOR_BGR2GRAY)
-        gray = cv2.resize(gray, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_LINEAR)
-        # Removed fastNlMeansDenoising (Too slow on CPU)
+        
+        # Bilateral Filter to remove noise while keeping edges
+        filtered = cv2.bilateralFilter(gray, 11, 17, 17)
+        
+        # Upscale for better OCR (3x)
+        resized = cv2.resize(filtered, None, fx=3.0, fy=3.0, interpolation=cv2.INTER_CUBIC)
+        
+        # Candidates for OCR
+        # 1. Plain Preprocessed
+        # 2. Adaptive Thresholding
+        # 3. Otsu's Thresholding
+        
+        thresh_adap = cv2.adaptiveThreshold(
+            resized, 255,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY,
+            11, 2
+        )
+        
+        _, thresh_otsu = cv2.threshold(resized, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        
+        # Also try CLAHE as a fallback candidate like before, but on the resized image
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        enhanced = clahe.apply(resized)
+        
+        candidates = [resized, thresh_adap, thresh_otsu, enhanced]
 
-        def run_ocr(img):
+        best_text = "Not Detected"
+        best_score = 0.0
+
+        for img in candidates:
             try:
-                # Confidence 0.15 (Master Rule)
+                # Lower confidence slightly to catch partials, but filter by length
                 results = self.reader.readtext(img)
                 for (_, text, score) in results:
                     clean = text.upper().replace(" ", "").replace(".", "").replace("-", "")
-                    if score >= 0.15 and len(clean) >= 4: return clean
+                    # Penalize short strings
+                    if len(clean) < 4: continue
+                    
+                    if score > best_score:
+                        best_score = score
+                        best_text = clean
             except: pass
-            return None
-
-        res = run_ocr(gray)
-        if res: return res
         
-        # Heavy Enhancement fallback
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-        return run_ocr(clahe.apply(gray)) or "Not Detected"
+        # Return best match if it meets threshold
+        if best_score >= 0.15: # Keep original confidence threshold
+            return best_text
+            
+        return "Not Detected"
 
     def process_video(self, video_path, output_csv_path, output_video_path, update_callback=None):
         cap = cv2.VideoCapture(video_path)
@@ -113,11 +143,11 @@ class SITAProcessor:
         fps = int(cap.get(cv2.CAP_PROP_FPS)) or 30
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         
-        # PERFORMANCE: 1020px limit
+        # PERFORMANCE: Relaxed limit to 1920px for better OCR
         scale = 1.0
-        if w_orig > 1020:
-            scale = 1020 / w_orig
-            w_out, h_out = 1020, int(h_orig * scale)
+        if w_orig > 1920:
+            scale = 1920 / w_orig
+            w_out, h_out = 1920, int(h_orig * scale)
         else:
             w_out, h_out = w_orig, h_orig
 

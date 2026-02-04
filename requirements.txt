@@ -2,9 +2,11 @@ flask
 python-dotenv
 opencv-python-headless
 ultralytics
+twilio
 easyocr
 numpy
 gunicorn
 flask-cors
 lapx
 eventlet
+firebase-admin

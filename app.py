@@ -536,7 +536,7 @@ def page_not_found(e):
 
 @app.route('/api/auth/otp/mobile/send', methods=['POST'])
 def send_mobile_otp():
-    """MOCKED Mobile OTP for Demo. In prod, integrate Twilio/SNS."""
+    """Real Mobile OTP via Twilio."""
     data = request.json
     mobile = data.get('mobile')
     country_code = data.get('country_code', '+91')
@@ -550,27 +550,59 @@ def send_mobile_otp():
     
     if not user:
         # Simulate vagueness for security? Or direct error?
-        # User requested: "otp should sent to the registered mobile number"
-        # Implies failure if not registered.
         return jsonify({'error': 'SECURE_ACCESS: Mobile identifier not recognized in system registry.'}), 404
     
     # Generate 6-digit code
     code = f"{random.randint(100000, 999999)}"
     
-    # Store in DB (Reusing otp_codes table, keying by full phone number)
+    # Store in DB
     full_number = f"{country_code}{mobile}"
     database.save_otp(full_number, code)
     
-    # LOG IT for user visibility (Simulating SMS)
-    print(f"============ SMS GATEWAY SIMULATION ============")
-    print(f"TO: {full_number} (Agent: {user['name']})")
-    print(f"MESSAGE: Your SITA Verification Code is: {code}")
-    print(f"================================================")
+    # Send Real SMS via Twilio
+    try:
+        from twilio.rest import Client
+        
+        account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+        auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+        from_number = os.getenv('TWILIO_PHONE_NUMBER')
+        
+        if not account_sid or not auth_token or not from_number:
+            logger.error("Twilio credentials missing in .env")
+            # Fallback for Dev/Demo
+            if app.debug:
+                 return jsonify({
+                    'success': True,
+                    'message': 'SMS Gateway Error (Dev Mode: Check Console)',
+                    'dev_mode_code': code 
+                })
+            return jsonify({'error': 'Server Misconfiguration: SMS Credentials Missing'}), 500
+            
+        client = Client(account_sid, auth_token)
+        
+        message = client.messages.create(
+            body=f"SITA SECURITY CODE: {code}. Do not share this credential.",
+            from_=from_number,
+            to=full_number
+        )
+        
+        logger.info(f"SMS sent successfully to {full_number}: {message.sid}")
+        
+    except Exception as e:
+        logger.error(f"Failed to send SMS: {e}")
+        if app.debug:
+            print(f"DEV FALLBACK OTP (Twilio Error): {code}")
+            return jsonify({
+                'success': True,
+                'message': f'SMS Gateway Error: {str(e)}',
+                'dev_mode_code': code 
+            })
+        return jsonify({'error': 'Failed to dispatch verification SMS'}), 500
     
     return jsonify({
         'success': True, 
-        'message': 'OTP dispatched to registered endpoint via Secure Gateway',
-        'dev_mode_code': code if app.debug else None # For easy testing
+        'message': 'OTP dispatched to registered endpoint via Twilio Secure Gateway',
+        'dev_mode_code': None # Hide in prod
     })
 
 @app.route('/api/auth/otp/mobile/verify', methods=['POST'])

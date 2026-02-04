@@ -3,6 +3,7 @@ import datetime
 import uuid
 from typing import Optional, Dict, Any
 from werkzeug.security import generate_password_hash, check_password_hash
+import firebase_utils # [NEW] Firebase Integration
 
 DB_FILE = 'sita.db'
 
@@ -113,6 +114,9 @@ def log_activity(actor_email: str, action: str, details: str = None, ip_address:
                      (actor_email, action, details, ip_address))
         conn.commit()
         conn.close()
+        
+        # [NEW] Sync to Firebase
+        firebase_utils.fire_log_activity(actor_email, action, details, ip_address)
     except Exception as e:
         print(f"AUDIT LOG FAILURE: {e}")
 
@@ -143,6 +147,11 @@ def create_super_admin(password: str) -> Dict[str, Any]:
     
     user = conn.execute("SELECT * FROM users WHERE role = 'super_admin'").fetchone()
     conn.close()
+    
+    # [NEW] Sync to Firebase
+    if user:
+        firebase_utils.fire_upsert_user(dict(user))
+        
     return dict(user)
 
 def authenticate_super_admin(password: str, agent_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
@@ -194,6 +203,11 @@ def upsert_google_user(email: str, name: str, picture: str) -> Dict[str, Any]:
     conn.commit()
     updated_user = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
     conn.close()
+    
+    # [NEW] Sync to Firebase
+    if updated_user:
+        firebase_utils.fire_upsert_user(dict(updated_user))
+        
     return dict(updated_user)
 
 def create_otp_user(email: str) -> Dict[str, Any]:
@@ -219,6 +233,11 @@ def create_otp_user(email: str) -> Dict[str, Any]:
 
     updated_user = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
     conn.close()
+    
+    # [NEW] Sync to Firebase
+    if updated_user:
+        firebase_utils.fire_upsert_user(dict(updated_user))
+        
     return dict(updated_user)
 
 def update_user_profile(email: str, name: str, phone: str, country_code: str, reason: str, age: int) -> Dict[str, Any]:
@@ -233,6 +252,8 @@ def update_user_profile(email: str, name: str, phone: str, country_code: str, re
     user = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
     conn.close()
     if user:
+        # [NEW] Sync to Firebase
+        firebase_utils.fire_upsert_user(dict(user))
         return dict(user)
     return None
 
@@ -280,6 +301,11 @@ def create_organization(name, state, district, password, created_by_email) -> Di
     
     org = conn.execute('SELECT * FROM organizations WHERE id = ?', (org_id,)).fetchone()
     conn.close()
+    
+    # [NEW] Sync to Firebase
+    if org:
+        firebase_utils.fire_upsert_org(dict(org))
+        
     return dict(org)
 
 def lookup_organization(name, state) -> bool:
