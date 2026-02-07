@@ -79,16 +79,54 @@ current_job = {
     "error": None
 }
 
+def load_persisted_job():
+    global current_job
+    try:
+        last_job = database.get_latest_job()
+        if last_job:
+            print(f"DEBUG: Restoring job {last_job['id']} from DB")
+            with job_lock:
+                current_job["id"] = last_job['id']
+                current_job["counters"] = last_job['counters']
+                current_job["video_link"] = last_job['video_link']
+                current_job["csv_link"] = last_job['csv_link']
+                current_job["error"] = last_job['error']
+                
+                # If it was processing when we died, mark as interrupted or error
+                # unless we want to resume? (Resuming requires knowing exactly where we stopped in video... hard)
+                # Let's mark as stopped but keep data.
+                if last_job['status'] == 'processing':
+                    current_job["status"] = "interrupted" 
+                else:
+                    current_job["status"] = last_job['status']
+    except Exception as e:
+        print(f"DEBUG: Failed to restore job: {e}")
+
 # --- Database & Auth ---
 import database
 import random
 
 # Initialize DB
+# Initialize DB
 database.init_db()
+load_persisted_job()
+
+last_save_time = 0
 
 def update_progress(counters):
+    global last_save_time
     with job_lock:
         current_job["counters"] = counters
+    
+    # Auto-Save Throttling (Save every 2 seconds max)
+    now = time.time()
+    if now - last_save_time > 2:
+        try:
+            if current_job["id"]:
+                database.update_job(current_job["id"], counters=counters)
+                last_save_time = now
+        except Exception as e:
+            print(f"Auto-save failed: {e}")
 
 def background_process(filepath, csv_path, video_path):
     global current_job
@@ -97,6 +135,9 @@ def background_process(filepath, csv_path, video_path):
         with job_lock:
             current_job["status"] = "processing"
             current_job["counters"] = {"total": 0, "cars": 0, "bikes": 0, "trucks": 0}
+            
+        # Create Job in DB
+        database.create_job(current_job["id"], "processing", current_job["counters"])
         
         final_counters = processor.process_video(filepath, csv_path, video_path, update_callback=update_progress)
         
@@ -105,6 +146,15 @@ def background_process(filepath, csv_path, video_path):
             current_job["status"] = "complete"
             current_job["video_link"] = os.path.basename(video_path)
             current_job["csv_link"] = os.path.basename(csv_path)
+            
+        # Final DB Update
+        database.update_job(
+            current_job["id"], 
+            status="complete", 
+            counters=final_counters,
+            video_link=os.path.basename(video_path),
+            csv_link=os.path.basename(csv_path)
+        )
         
     except Exception as e:
         logger = logging.getLogger(__name__)
@@ -112,6 +162,10 @@ def background_process(filepath, csv_path, video_path):
         with job_lock:
             current_job["status"] = "error"
             current_job["error"] = str(e)
+            
+        # Error DB Update
+        if current_job["id"]:
+            database.update_job(current_job["id"], status="error", error=str(e))
 
 # --- Auth Guard Decorator ---
 from functools import wraps
@@ -507,7 +561,7 @@ def get_report():
                 rows.append(row)
     
     return jsonify({
-        "columns": ["vehicle_type", "color", "number_plate", "confidence", "frame"],
+        "columns": ["vehicle_type", "color", "number_plate", "initial_plate", "confidence", "frame"],
         "data": rows
     })
 
@@ -536,73 +590,41 @@ def page_not_found(e):
 
 @app.route('/api/auth/otp/mobile/send', methods=['POST'])
 def send_mobile_otp():
-    """Real Mobile OTP via Twilio."""
+    """Real Mobile OTP via Twilio Verify."""
     data = request.json
     mobile = data.get('mobile')
     country_code = data.get('country_code', '+91')
     
     if not mobile: return jsonify({'error': 'Mobile number required'}), 400
     
-    # STRICT CHECK: Only allow registered numbers (as per strict protocol)
-    conn = database.get_db_connection()
-    user = conn.execute("SELECT * FROM users WHERE phone = ? AND country_code = ?", (mobile, country_code)).fetchone()
-    conn.close()
-    
-    if not user:
-        # Simulate vagueness for security? Or direct error?
-        return jsonify({'error': 'SECURE_ACCESS: Mobile identifier not recognized in system registry.'}), 404
-    
-    # Generate 6-digit code
-    code = f"{random.randint(100000, 999999)}"
-    
-    # Store in DB
     full_number = f"{country_code}{mobile}"
-    database.save_otp(full_number, code)
     
-    # Send Real SMS via Twilio
+    # Send OTP via Twilio Verify
     try:
         from twilio.rest import Client
         
         account_sid = os.getenv('TWILIO_ACCOUNT_SID')
         auth_token = os.getenv('TWILIO_AUTH_TOKEN')
-        from_number = os.getenv('TWILIO_PHONE_NUMBER')
+        service_sid = os.getenv('TWILIO_SERVICE_SID')
         
-        if not account_sid or not auth_token or not from_number:
+        if not account_sid or not auth_token or not service_sid:
             logger.error("Twilio credentials missing in .env")
-            # Fallback for Dev/Demo
-            if app.debug:
-                 return jsonify({
-                    'success': True,
-                    'message': 'SMS Gateway Error (Dev Mode: Check Console)',
-                    'dev_mode_code': code 
-                })
             return jsonify({'error': 'Server Misconfiguration: SMS Credentials Missing'}), 500
             
         client = Client(account_sid, auth_token)
         
-        message = client.messages.create(
-            body=f"SITA SECURITY CODE: {code}. Do not share this credential.",
-            from_=from_number,
-            to=full_number
-        )
+        verification = client.verify.v2.services(service_sid).verifications.create(to=full_number, channel='sms')
         
-        logger.info(f"SMS sent successfully to {full_number}: {message.sid}")
+        logger.info(f"OTP sent successfully to {full_number}: {verification.sid}")
         
     except Exception as e:
         logger.error(f"Failed to send SMS: {e}")
-        if app.debug:
-            print(f"DEV FALLBACK OTP (Twilio Error): {code}")
-            return jsonify({
-                'success': True,
-                'message': f'SMS Gateway Error: {str(e)}',
-                'dev_mode_code': code 
-            })
-        return jsonify({'error': 'Failed to dispatch verification SMS'}), 500
+        return jsonify({'error': f'Failed to dispatch verification SMS: {str(e)}'}), 500
     
     return jsonify({
         'success': True, 
-        'message': 'OTP dispatched to registered endpoint via Twilio Secure Gateway',
-        'dev_mode_code': None # Hide in prod
+        'message': 'OTP dispatched to registered endpoint via Twilio Verify',
+        'dev_mode_code': None 
     })
 
 @app.route('/api/auth/otp/mobile/verify', methods=['POST'])
@@ -614,7 +636,29 @@ def verify_mobile_otp():
     
     full_number = f"{country_code}{mobile}"
     
-    if database.verify_otp(full_number, code):
+    # Verify via Twilio
+    try:
+        from twilio.rest import Client
+        account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+        auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+        service_sid = os.getenv('TWILIO_SERVICE_SID')
+        
+        client = Client(account_sid, auth_token)
+        
+        verification_check = client.verify.v2.services(service_sid).verification_checks.create(to=full_number, code=code)
+        
+        if verification_check.status == 'approved':
+            # Proceed with Login/Registration Logic (Same as before)
+            pass 
+        else:
+             return jsonify({'error': 'Invalid OTP Code'}), 400
+             
+    except Exception as e:
+        logger.error(f"Twilio Verify Error: {e}")
+        return jsonify({'error': f'Verification Failed: {str(e)}'}), 500
+
+    if True: # verification_check.status == 'approved' implies regex flow logic fallback or just simple pass
+        # Determine if user exists, else create/update
         # Determine if user exists, else create/update
         # Note: We treat phone as a unique identifier here, but our User model is Email-centric.
         # Strategy: Use phone@mobile.sita as synthetic email if specific email not provided?

@@ -124,8 +124,8 @@ export default {
                     "100%": { transform: "rotate(360deg)" },
                 },
                 "scan-line": {
-                    "0%": { top: "-10%" },
-                    "100%": { top: "110%" },
+                    "0%": { transform: "translateY(-100%)" },
+                    "100%": { transform: "translateY(100vh)" },
                 },
                 "typing": {
                     "from": { width: "0" },

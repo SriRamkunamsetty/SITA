@@ -141,15 +141,26 @@
   }
 
   /* Scanline Effect */
+  /* Scanline Effect - Optimized */
+  .scanlines {
+    position: relative;
+    overflow: hidden;
+  }
+
   .scanlines::after {
     content: '';
     @apply absolute inset-0 pointer-events-none;
+    height: 200%;
+    /* Double height for seamless scrolling */
     background: repeating-linear-gradient(0deg,
         transparent,
         transparent 2px,
         hsl(var(--primary) / 0.03) 2px,
         hsl(var(--primary) / 0.03) 4px);
-    animation: scanlines 8s linear infinite;
+    animation: scanlines 4s linear infinite;
+    /* Faster for smoother look */
+    will-change: transform;
+    top: -50%;
   }
 
   /* Status Indicator */
@@ -290,11 +301,11 @@
 
 @keyframes scanlines {
   0% {
-    background-position: 0 0;
+    transform: translateY(0);
   }
 
   100% {
-    background-position: 0 100px;
+    transform: translateY(100px);
   }
 }
 

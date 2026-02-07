@@ -19,12 +19,43 @@ const UserDashboard = () => {
     const { showToast } = useToast();
 
     // UI Logic
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [videoLink, setVideoLink] = useState(null);
-    const [processingStatus, setProcessingStatus] = useState('idle'); // idle, uploading, processing, complete
-    const [uploadProgress, setUploadProgress] = useState(0);
-    const [reportData, setReportData] = useState([]);
+    // Persistence Keys
+    const STORAGE_KEY = 'sita_analysis_state';
+
+    // UI Logic - with Initializers from Storage
+    const [isAnalyzing, setIsAnalyzing] = useState(() => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved).isAnalyzing : false;
+    });
+    const [videoLink, setVideoLink] = useState(() => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved).videoLink : null;
+    });
+    const [processingStatus, setProcessingStatus] = useState(() => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved).processingStatus : 'idle';
+    });
+    const [uploadProgress, setUploadProgress] = useState(() => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved).uploadProgress : 0;
+    });
+    const [reportData, setReportData] = useState(() => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved).reportData : [];
+    });
     const [filterText, setFilterText] = useState('');
+
+    // Persist State Changes
+    useEffect(() => {
+        const stateToSave = {
+            isAnalyzing,
+            videoLink,
+            processingStatus,
+            uploadProgress,
+            reportData
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+    }, [isAnalyzing, videoLink, processingStatus, uploadProgress, reportData]);
 
     // Poll for status if processing
     useEffect(() => {
@@ -331,7 +362,8 @@ const UserDashboard = () => {
                                             <th className="p-4">Reference</th>
                                             <th className="p-4">Vehicle Type</th>
                                             <th className="p-4">Color Signature</th>
-                                            <th className="p-4">Plate Identifier</th>
+                                            <th className="p-4">Best Plate (Refined)</th>
+                                            <th className="p-4 text-muted-foreground">Initial Scan (Raw)</th>
                                             <th className="p-4">Detection Confidence</th>
                                         </tr>
                                     </thead>
@@ -356,6 +388,11 @@ const UserDashboard = () => {
                                                     <td className="p-4">
                                                         <span className="font-bold text-primary px-2 py-1 bg-primary/10 border border-primary/30 rounded text-xs tracking-[0.2em]">
                                                             {row.number_plate || 'NOT_FOUND'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <span className="font-mono text-[10px] text-muted-foreground opacity-70 tracking-[0.1em] border-b border-dashed border-white/10 pb-0.5">
+                                                            {row.initial_plate || '---'}
                                                         </span>
                                                     </td>
                                                     <td className="p-4">

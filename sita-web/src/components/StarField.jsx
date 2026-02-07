@@ -4,13 +4,52 @@ const StarField = () => {
     const canvasRef = useRef(null);
     const starsRef = useRef([]);
     const mouseRef = useRef({ x: 0, y: 0 });
+    const starCacheRef = useRef(null);
+
+    // Create cached star sprite
+    const getStarCache = () => {
+        if (starCacheRef.current) return starCacheRef.current;
+
+        const cacheCanvas = document.createElement('canvas');
+        cacheCanvas.width = 50;
+        cacheCanvas.height = 50;
+        const ctx = cacheCanvas.getContext('2d');
+
+        const x = 25;
+        const y = 25;
+        const size = 5; // Base radius
+
+        // Outer glow
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, size * 4);
+        gradient.addColorStop(0, `rgba(0, 245, 255, 1)`);
+        gradient.addColorStop(0.5, `rgba(0, 245, 255, 0.2)`);
+        gradient.addColorStop(1, 'rgba(0, 245, 255, 0)');
+
+        ctx.beginPath();
+        ctx.arc(x, y, size * 4, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // Core
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fill();
+
+        starCacheRef.current = cacheCanvas;
+        return cacheCanvas;
+    };
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { alpha: false }); // Optimization: Disable alpha if not needed (we need it for clear, but maybe?)
+        // Actually we need transparency for the stars, so alpha: true (default)
+
         if (!ctx) return;
+
+        const starSprite = getStarCache();
 
         const resizeCanvas = () => {
             canvas.width = window.innerWidth;
@@ -21,7 +60,7 @@ const StarField = () => {
         window.addEventListener('resize', resizeCanvas);
 
         // Initialize stars
-        const starCount = 75;
+        const starCount = 100; // Increased count since we are more efficient now
         starsRef.current = Array.from({ length: starCount }, () => ({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
@@ -42,12 +81,13 @@ const StarField = () => {
         // Animation loop
         let animationId;
         const animate = () => {
-            ctx.fillStyle = 'rgba(10, 10, 20, 0.1)';
+            // Trail effect (keep this, it's nice)
+            ctx.fillStyle = 'rgba(10, 10, 20, 0.2)'; // Slightly reduced trail length (higher alpha = shorter trails)
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             starsRef.current.forEach((star) => {
                 // Move stars toward camera
-                star.z -= 0.5;
+                star.z -= 1.5; // Faster speed for less "lazy" feel
                 if (star.z <= 0) {
                     star.z = 1000;
                     star.x = Math.random() * canvas.width;
@@ -60,29 +100,22 @@ const StarField = () => {
                 const y = (star.y - canvas.height / 2) * perspective + canvas.height / 2 + mouseRef.current.y * (1000 - star.z) * 0.01;
 
                 // Skip if outside viewport
-                if (x < 0 || x > canvas.width || y < 0 || y > canvas.height) return;
+                if (x < -50 || x > canvas.width + 50 || y < -50 || y > canvas.height + 50) return;
 
-                // Draw star with glow
-                const size = star.size * perspective * 0.5;
+                // Draw star from cache
+                const scale = (star.size * perspective * 0.5) / 5; // Scale relative to sprite base size (5)
                 const opacity = star.opacity * (1 - star.z / 1000);
 
-                // Outer glow
-                const gradient = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
-                gradient.addColorStop(0, `rgba(0, 245, 255, ${opacity * 0.5})`);
-                gradient.addColorStop(0.5, `rgba(0, 245, 255, ${opacity * 0.1})`);
-                gradient.addColorStop(1, 'rgba(0, 245, 255, 0)');
+                ctx.globalAlpha = opacity;
 
-                ctx.beginPath();
-                ctx.arc(x, y, size * 3, 0, Math.PI * 2);
-                ctx.fillStyle = gradient;
-                ctx.fill();
+                // Draw Image is much faster than gradients
+                // Center the sprite (25, 25 is center of 50x50 sprite)
+                const sizeW = 50 * scale;
+                const sizeH = 50 * scale;
 
-                // Core
-                ctx.beginPath();
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-                ctx.fill();
+                ctx.drawImage(starSprite, x - sizeW / 2, y - sizeH / 2, sizeW, sizeH);
             });
+            ctx.globalAlpha = 1.0; // Reset
 
             animationId = requestAnimationFrame(animate);
         };

@@ -31,15 +31,7 @@ const countryCodes = [
     { code: '+61', flag: '🇦🇺', name: 'Australia' },
 ];
 
-const INDIAN_STATES = [
-    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
-    "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh",
-    "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
-    "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
-    "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh",
-    "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", "Ladakh",
-    "Lakshadweep", "Puducherry"
-];
+import { INDIAN_STATES_AND_DISTRICTS } from '../data/indian_districts';
 
 const AccessGate = () => {
     const navigate = useNavigate();
@@ -171,7 +163,7 @@ const AccessGate = () => {
                 setMessage(res.message || "Access Protocol Dispatched.");
             }
         } catch (e) {
-            showToast("PROTOCOL DISPATCH FAILED", "error");
+            showToast(`PROTOCOL DISPATCH FAILED: ${e.message}`, "error");
             setMessage("Failed to initialize security protocol.");
         } finally {
             setIsLoading(false);
@@ -215,7 +207,7 @@ const AccessGate = () => {
 
             setCurrentStep(2);
         } catch (e) {
-            showToast("INVALID SECURITY CODE", "error");
+            showToast(`INVALID SECURITY CODE: ${e.message}`, "error");
             setMessage("Invalid code.");
         } finally {
             setIsLoading(false);
@@ -730,31 +722,34 @@ const OrgStep = ({ formData, setFormData, user, lookupStatus, setLookupStatus, f
                         <select
                             value={formData.orgState}
                             onChange={(e) => {
-                                setFormData(prev => ({ ...prev, orgState: e.target.value }));
+                                setFormData(prev => ({ ...prev, orgState: e.target.value, orgDistrict: '' }));
                                 if (lookupStatus !== 'idle') resetSearch();
                             }}
                             className="w-full p-2 bg-black/50 border border-border rounded font-mono text-xs appearance-none focus:border-primary focus:outline-none text-white"
                             disabled={lookupStatus === 'found'}
                         >
                             <option value="">SELECT STATE</option>
-                            {INDIAN_STATES.map(s => (
+                            {Object.keys(INDIAN_STATES_AND_DISTRICTS).map(s => (
                                 <option key={s} value={s}>{s.toUpperCase()}</option>
                             ))}
                         </select>
                     </div>
                     <div>
                         <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">District</label>
-                        <input
-                            type="text"
+                        <select
                             value={formData.orgDistrict}
                             onChange={(e) => {
                                 setFormData(prev => ({ ...prev, orgDistrict: e.target.value }));
                                 if (lookupStatus !== 'idle') resetSearch();
                             }}
-                            placeholder="Type District..."
-                            className="w-full p-2 bg-black/50 border border-border rounded font-mono text-xs focus:border-primary focus:outline-none text-white"
-                            disabled={lookupStatus === 'found'}
-                        />
+                            className="w-full p-2 bg-black/50 border border-border rounded font-mono text-xs appearance-none focus:border-primary focus:outline-none text-white"
+                            disabled={!formData.orgState || lookupStatus === 'found'}
+                        >
+                            <option value="">SELECT DISTRICT</option>
+                            {formData.orgState && INDIAN_STATES_AND_DISTRICTS[formData.orgState]?.map(d => (
+                                <option key={d} value={d}>{d.toUpperCase()}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
 

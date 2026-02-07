@@ -27,7 +27,7 @@ const NeonButton = ({
             onClick={onClick}
             disabled={disabled}
             className={cn(
-                'relative font-orbitron font-semibold uppercase tracking-[0.2em] transition-all duration-300',
+                'relative font-orbitron font-semibold uppercase tracking-[0.2em] transition-[transform,box-shadow,opacity,background-color] duration-300',
                 'border bg-transparent rounded-sm',
                 'hover:translate-y-[-2px]',
                 'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none',

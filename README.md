@@ -31,10 +31,12 @@ The interface is a Single Page Application (SPA) built for speed and visual fide
 ### **2. The Neural Hub (Backend)**
 The brain of SITA is a high-performance Flask application designed for non-blocking inference.
 - **Engine**: Flask (Python 3.9+) with **Threaded Multi-Job** support.
+- **Auth Gateway**: Multi-factor authentication supporting **Google OAuth**, **Twilio Mobile OTP**, and Email Magic Links.
 - **Vision Core**:
     - **Detector**: `Ultralytics YOLOv11` (Optimized `yolov8s.pt` model) for vehicle tracking.
     - **Tracker**: `ByteTrack` algorithm for persistent object ID retention across frames.
-    - **OCR**: `EasyOCR` with license plate localization and confidence thresholding (Score > 0.15).
+    - **OCR Engine**: GPU-Accelerated `EasyOCR` with **Dual-Plate Tracking** (captures both *Initial Lock* and *Best Refined* plates).
+    - **Image Enhancement**: Real-time sharpening kernels and CLAHE preprocessing for blurry plates.
 - **Database**: SQLite3 (`sita.db`) with relational mapping for Users, Organizations, and OTP Codes.
 
 ---
@@ -44,16 +46,19 @@ The brain of SITA is a high-performance Flask application designed for non-block
 ### **1. The Video Processing Pipeline (Process-Flow)**
 The core value of SITA is its ability to ingest raw footage and convert it into structured intelligence. Here is the exact technical lifecycle of a video file:
 
-1.  **Ingestion & Hashing**:
+1.  **Ingestion & Persistence**:
     -   User uploads a video via the Drag-and-Drop zone (`GlassPanel`).
+    -   **State Persistence**: Analysis progress is saved to `localStorage`, protecting data against accidental tab closures.
     -   Backend validates file integrity and generates a unique `UUID` Job ID.
-    -   Video is stored in `uploads/` and a background thread is spawned (`app.py:background_process`).
 
 2.  **Neural Analysis (Frame-by-Frame)**:
-    -   **Preprocessing**: Frames are resized to a max width of 1020px to balance accuracy and speed.
+    -   **Preprocessing**: Frames are resized and sharpened.
     -   **Inference**: YOLO detects objects (Cars, Bikes, Trucks).
-    -   **Tracking**: Each object is assigned a persistent ID. If an object is seen for 5 consecutive frames, it is "Locked" and counted.
-    -   **Color Logic**: HSV Color Space analysis determines the dominant color (Red, Blue, Black, White, etc.).
+    -   **Tracking**: Each object is tracked using ByteTrack.
+    -   **Dual-Plate OCR**:
+        -   **Initial Plate**: Records the first valid alphanumeric sequence found.
+        -   **Best Plate**: Continuously refines the reading over 10 frames to find the highest confidence match.
+    -   **Color Logic**: HSV Color Space analysis determines the dominant color.
 
 3.  **Universal Transcoding (CRITICAL)**:
     -   *Problem*: Browser support for `.avi` or raw `mp4` codecs (like `mp4v`) is inconsistent.

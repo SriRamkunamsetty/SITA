@@ -14,14 +14,18 @@ class VehicleData:
         self.cls_id = cls_id
         self.frames_seen = 0
         self.last_seen_frame = 0
-        self.locked = False      # Mark as counted (Frame 5)
-        self.plate_locked = False # OCR Success (Score >= 0.15)
-        self.ocr_attempts = 0     # Cap at 5
-        self.csv_written = False  # Strict single write
+        self.locked = False      # Mark as counted
+        self.plate_locked = False # Initial OCR Success
+        self.ocr_attempts = 0     # Increased cap
+        self.csv_written = False  
         
         self.color = "Blue"  # Default
-        self.plate = "Not Detected"
         self.type_str = "Car"
+        
+        # OCR Data
+        self.initial_plate = "Not Detected"
+        self.best_plate = "Not Detected"
+        self.best_conf = 0.0
         
         if cls_id == 2: self.type_str = "Car"
         elif cls_id == 3: self.type_str = "Bike"
@@ -33,7 +37,11 @@ class SITAProcessor:
         print("DEBUG: Loading YOLO Model...")
         self.model = YOLO("yolov8s.pt") 
         print("DEBUG: YOLO Loaded. Initializing OCR...")
-        self.reader = easyocr.Reader(['en'], gpu=False)
+        # OPTIMIZATION: Enable GPU and allowlist
+        import torch
+        use_gpu = torch.cuda.is_available()
+        print(f"DEBUG: OCR GPU Accelerated: {use_gpu}")
+        self.reader = easyocr.Reader(['en'], gpu=use_gpu)
         print("DEBUG: OCR Initialized.")
         self.tracks = {}
 
@@ -68,56 +76,49 @@ class SITAProcessor:
         return best_color
 
     def detect_plate(self, crop, frame_width):
-        if crop.size == 0: return "Not Detected"
+        if crop.size == 0: return "Not Detected", 0.0
         h, w, _ = crop.shape
-        if w < (frame_width * 0.05): return "Not Detected"
+        if w < (frame_width * 0.05): return "Not Detected", 0.0
 
         # Expand Crop Rule: Start at 40% height, End at 85%
         p_y1, p_y2 = int(h * 0.40), int(h * 0.85)
         p_x1, p_x2 = int(w * 0.05), int(w * 0.95)
         plate_crop = crop[p_y1:p_y2, p_x1:p_x2]
-        if plate_crop.size == 0: return "Not Detected"
+        if plate_crop.size == 0: return "Not Detected", 0.0
 
         # Dynamic Padding
         pad = max(5, int(frame_width * 0.01))
         plate_crop = cv2.copyMakeBorder(plate_crop, pad, pad, pad, pad, cv2.BORDER_CONSTANT, value=(0,0,0))
 
-        # Preprocessing: Grayscale -> Bilateral -> Resize
+        # Preprocessing: Grayscale
         gray = cv2.cvtColor(plate_crop, cv2.COLOR_BGR2GRAY)
         
-        # Bilateral Filter to remove noise while keeping edges
-        filtered = cv2.bilateralFilter(gray, 11, 17, 17)
+        # 1. Sharpening Kernel (New)
+        kernel = np.array([[0, -1, 0], [-1, 5,-1], [0, -1, 0]])
+        sharpened = cv2.filter2D(gray, -1, kernel)
         
-        # Upscale for better OCR (3x)
-        resized = cv2.resize(filtered, None, fx=3.0, fy=3.0, interpolation=cv2.INTER_CUBIC)
+        # 2. Resize
+        resized = cv2.resize(sharpened, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_CUBIC)
         
-        # Candidates for OCR
-        # 1. Plain Preprocessed
-        # 2. Adaptive Thresholding
-        # 3. Otsu's Thresholding
-        
-        thresh_adap = cv2.adaptiveThreshold(
-            resized, 255,
-            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-            cv2.THRESH_BINARY,
-            11, 2
-        )
-        
+        # 3. Thresholding Candidates
         _, thresh_otsu = cv2.threshold(resized, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         
-        # Also try CLAHE as a fallback candidate like before, but on the resized image
+        # 4. CLAHE
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
         enhanced = clahe.apply(resized)
         
-        candidates = [resized, thresh_adap, thresh_otsu, enhanced]
+        # Candidates for OCR
+        # Include 'gray' (raw resized) as sometimes filters destroy features
+        raw_resized = cv2.resize(gray, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_CUBIC)
+        candidates = [thresh_otsu, enhanced, raw_resized]
 
         best_text = "Not Detected"
         best_score = 0.0
 
         for img in candidates:
             try:
-                # Lower confidence slightly to catch partials, but filter by length
-                results = self.reader.readtext(img)
+                # OPTIMIZATION: Allowlist for AlphaNumeric only
+                results = self.reader.readtext(img, allowlist='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ')
                 for (_, text, score) in results:
                     clean = text.upper().replace(" ", "").replace(".", "").replace("-", "")
                     # Penalize short strings
@@ -128,11 +129,7 @@ class SITAProcessor:
                         best_text = clean
             except: pass
         
-        # Return best match if it meets threshold
-        if best_score >= 0.15: # Keep original confidence threshold
-            return best_text
-            
-        return "Not Detected"
+        return best_text, best_score
 
     def process_video(self, video_path, output_csv_path, output_video_path, update_callback=None):
         cap = cv2.VideoCapture(video_path)
@@ -171,7 +168,8 @@ class SITAProcessor:
 
         self.tracks = {}
         with open(output_csv_path, 'w', newline='') as f:
-            csv.writer(f).writerow(["vehicle_type", "color", "number_plate", "confidence", "frame"])
+            # Updated Header for Dual Plate Tracking
+            csv.writer(f).writerow(["vehicle_type", "color", "number_plate", "initial_plate", "confidence", "frame"])
 
         frame_idx = 0
         counters = {"total": 0, "cars": 0, "bikes": 0, "trucks": 0, "progress": 0}
@@ -204,7 +202,7 @@ class SITAProcessor:
                 
                 try:
                     results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", 
-                                             classes=[2, 3, 7], imgsz=320, verbose=False)
+                                             classes=[2, 3, 7], imgsz=640, verbose=False) # Increased imgsz for better detection
                     
                     frame_ids = []
                     for r in results:
@@ -234,22 +232,31 @@ class SITAProcessor:
                                     elif v.type_str == "Truck": counters["trucks"] += 1
                                     if update_callback: update_callback(counters)
 
-                                # LOGIC: OCR
-                                if not v.plate_locked and v.ocr_attempts < 5:
-                                    if v.frames_seen >= 5 and v.frames_seen % 10 == 0:
+                                # LOGIC: OCR (Enhanced)
+                                # Try OCR more times (up to 10) to find best plate
+                                if v.ocr_attempts < 10: 
+                                    if v.frames_seen >= 5 and v.frames_seen % 5 == 0: # Check frequency increased
                                         v.ocr_attempts += 1
-                                        res = self.detect_plate(crop, w_out)
-                                        if res != "Not Detected":
-                                            v.plate = res
-                                            v.plate_locked = True
-                                            with open(output_csv_path, 'a', newline='') as f:
-                                                csv.writer(f).writerow([v.type_str, v.color, v.plate, f"{v.confidence:.2f}", frame_idx])
-                                                v.csv_written = True
+                                        text, score = self.detect_plate(crop, w_out)
+                                        
+                                        if text != "Not Detected" and score > 0.3: # Threshold
+                                            # Update Best Plate
+                                            if score > v.best_conf:
+                                                v.best_conf = score
+                                                v.best_plate = text
+                                            
+                                            # Set Initial Plate if empty
+                                            if v.initial_plate == "Not Detected":
+                                                v.initial_plate = text
+                                                v.plate_locked = True # We have at least one lock
 
                                 # DRAWING
                                 color = (0, 255, 0)
-                                lbl = "Vehicle"
-                                if v.plate_locked: color, lbl = (0, 255, 255), v.plate
+                                # Show BEST plate on UI
+                                lbl = v.type_str
+                                if v.best_plate != "Not Detected": 
+                                    color, lbl = (0, 255, 255), v.best_plate
+                                    
                                 cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
                                 (tw, th), _ = cv2.getTextSize(lbl, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
                                 cv2.rectangle(frame, (x1, y1-20), (x1+tw, y1), color, -1)
@@ -260,19 +267,20 @@ class SITAProcessor:
                     
                 out.write(frame)
                 
-                # Cleanup Old Tracks
+                # Cleanup Old Tracks & Write Best Result
                 for tid, v in self.tracks.items():
                     if tid not in frame_ids and v.locked and not v.csv_written:
                         if (frame_idx - v.last_seen_frame) > 15:
                             with open(output_csv_path, 'a', newline='') as f:
-                                csv.writer(f).writerow([v.type_str, v.color, v.plate, f"{v.confidence:.2f}", frame_idx])
+                                # Write BEST and INITIAL
+                                csv.writer(f).writerow([v.type_str, v.color, v.best_plate, v.initial_plate, f"{v.best_conf:.2f}", frame_idx])
                                 v.csv_written = True
 
             # Final Flush
             for tid, v in self.tracks.items():
                 if v.locked and not v.csv_written:
                     with open(output_csv_path, 'a', newline='') as f:
-                        csv.writer(f).writerow([v.type_str, v.color, v.plate, f"{v.confidence:.2f}", frame_idx])
+                        csv.writer(f).writerow([v.type_str, v.color, v.best_plate, v.initial_plate, f"{v.best_conf:.2f}", frame_idx])
                         v.csv_written = True
 
         except Exception as main_e:

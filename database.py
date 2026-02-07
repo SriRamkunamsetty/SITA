@@ -71,6 +71,19 @@ def init_db():
         )
     ''')
 
+    # Jobs Table (Persistence)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS jobs (
+            id TEXT PRIMARY KEY,
+            status TEXT,
+            counters TEXT,  -- JSON string
+            video_link TEXT,
+            csv_link TEXT,
+            error TEXT,
+            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
 
     # Migration: Add agent_id if missing (for existing installations)
     try:
@@ -462,3 +475,65 @@ def verify_otp(email: str, code: str) -> bool:
         print(f"DEBUG: OTP Expired for {email}. Expired at: {expires_at}, Current: {current_time}")
         
     return False
+
+
+# --- Job Persistence ---
+
+def create_job(job_id, status, counters):
+    import json
+    conn = get_db_connection()
+    conn.execute('INSERT INTO jobs (id, status, counters, last_updated) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
+                 (job_id, status, json.dumps(counters)))
+    conn.commit()
+    conn.close()
+
+def update_job(job_id, status=None, counters=None, video_link=None, csv_link=None, error=None):
+    import json
+    conn = get_db_connection()
+    
+    query = "UPDATE jobs SET last_updated = CURRENT_TIMESTAMP"
+    params = []
+    
+    if status is not None:
+        query += ", status = ?"
+        params.append(status)
+    if counters is not None:
+        query += ", counters = ?"
+        params.append(json.dumps(counters))
+    if video_link is not None:
+        query += ", video_link = ?"
+        params.append(video_link)
+    if csv_link is not None:
+        query += ", csv_link = ?"
+        params.append(csv_link)
+    if error is not None:
+        query += ", error = ?"
+        params.append(error)
+        
+    query += " WHERE id = ?"
+    params.append(job_id)
+    
+    conn.execute(query, tuple(params))
+    conn.commit()
+    conn.close()
+
+def get_latest_job():
+    import json
+    conn = get_db_connection()
+    # Check if table exists first (migration safety)
+    try:
+        job = conn.execute('SELECT * FROM jobs ORDER BY last_updated DESC LIMIT 1').fetchone()
+    except sqlite3.OperationalError:
+        return None
+        
+    conn.close()
+    
+    if job:
+        job_dict = dict(job)
+        if job_dict['counters']:
+            try:
+                job_dict['counters'] = json.loads(job_dict['counters'])
+            except:
+                job_dict['counters'] = {"total": 0, "cars": 0, "bikes": 0, "trucks": 0}
+        return job_dict
+    return None
