@@ -21,9 +21,9 @@ const steps = [
 ];
 
 const countryCodes = [
+    { code: '+91', flag: '🇮🇳', name: 'India' },
     { code: '+1', flag: '🇺🇸', name: 'USA' },
     { code: '+44', flag: '🇬🇧', name: 'UK' },
-    { code: '+91', flag: '🇮🇳', name: 'India' },
     { code: '+81', flag: '🇯🇵', name: 'Japan' },
     { code: '+49', flag: '🇩🇪', name: 'Germany' },
     { code: '+33', flag: '🇫🇷', name: 'France' },
@@ -48,7 +48,7 @@ const AccessGate = () => {
         name: '',
         email: '',
         phone: '',
-        countryCode: '+1',
+        countryCode: '+91',
         reason: '',
         pledgeAccepted: false,
         otp: '',
@@ -149,7 +149,7 @@ const AccessGate = () => {
         try {
             const payload = authMethod === 'email'
                 ? { email: formData.email }
-                : { phone: formData.phone, country_code: formData.countryCode };
+                : { mobile: formData.phone, country_code: formData.countryCode };
 
             const endpoint = authMethod === 'email' ? '/auth/otp/send' : '/auth/otp/mobile/send';
             const res = await apiRequest(endpoint, 'POST', payload);
@@ -175,7 +175,7 @@ const AccessGate = () => {
         try {
             const payload = {
                 code: formData.otp,
-                ...(authMethod === 'email' ? { email: formData.email } : { phone: formData.phone, country_code: formData.countryCode })
+                ...(authMethod === 'email' ? { email: formData.email } : { mobile: formData.phone, country_code: formData.countryCode })
             };
 
             const endpoint = authMethod === 'email' ? '/auth/otp/verify' : '/auth/otp/mobile/verify';
@@ -602,7 +602,7 @@ const AccessGate = () => {
                     ))}
                 </div>
 
-                <GlassPanel className="p-8 relative overflow-hidden" corners>
+                <GlassPanel className="p-4 md:p-8 relative overflow-hidden" corners>
                     {/* Content render based on step, customized for first 2 steps */}
                     {currentStep === 1 ? renderStep1() :
                         currentStep === 2 ? renderStep2() :
@@ -716,7 +716,7 @@ const OrgStep = ({ formData, setFormData, user, lookupStatus, setLookupStatus, f
 
             {/* Location Inputs - Always Visible if not found/joined yet */}
             <div className="space-y-4 bg-muted/10 p-4 rounded-lg border border-white/5">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">State</label>
                         <select

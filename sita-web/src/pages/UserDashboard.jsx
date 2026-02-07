@@ -175,34 +175,48 @@ const UserDashboard = () => {
 
             {/* Top Bar */}
             <header className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-3xl border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)] px-4 lg:px-8 py-3">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-primary/20 border border-primary/50 flex items-center justify-center">
-                            <Cpu className="w-6 h-6 text-primary" />
-                        </div>
-                        <div>
-                            <h1 className="font-orbitron text-lg font-bold text-primary tracking-tighter uppercase">{user?.name}</h1>
-                            <div className="flex items-center gap-3 font-mono text-[9px] text-muted-foreground uppercase opacity-90 mt-0.5">
-                                <span>ID: <span className="text-brand-neon">{user?.agent_id || 'PENDING'}</span></span>
-                                <span className="text-white/20">|</span>
-                                <span>ORG: <span className="text-white">{user?.org_name || 'UNASSIGNED'}</span></span>
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0">
+                    <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-lg bg-primary/20 border border-primary/50 flex items-center justify-center flex-shrink-0">
+                                <Cpu className="w-6 h-6 text-primary" />
                             </div>
+                            <div>
+                                <h1 className="font-orbitron text-lg font-bold text-primary tracking-tighter uppercase truncate max-w-[150px] md:max-w-none">{user?.name}</h1>
+                                <div className="flex items-center gap-3 font-mono text-[9px] text-muted-foreground uppercase opacity-90 mt-0.5">
+                                    <span>ID: <span className="text-brand-neon">{user?.agent_id || 'PENDING'}</span></span>
+                                    <span className="text-white/20">|</span>
+                                    <span className="truncate max-w-[100px] md:max-w-none">ORG: <span className="text-white">{user?.org_name || 'UNASSIGNED'}</span></span>
+                                </div>
+                            </div>
+                        </div>
+                        {/* Mobile End Shift Button (Visible only on small screens) */}
+                        <div className="md:hidden">
+                            <NeonButton onClick={logout} size="sm" className="border-white/10 hover:bg-white/5 text-[10px] px-2 py-1 h-8">
+                                <LogOut className="w-3 h-3" />
+                            </NeonButton>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
                         <div className="hidden md:flex items-center gap-4 border-r border-border/50 pr-6">
                             <StatusIndicator status="online" label="STREAMS ACTIVE" />
                         </div>
-                        <NeonButton onClick={logout} size="sm" className="border-white/10 hover:bg-white/5 text-xs">
-                            End Shift
-                        </NeonButton>
+                        <div className="hidden md:block">
+                            <NeonButton onClick={logout} size="sm" className="border-white/10 hover:bg-white/5 text-xs">
+                                End Shift
+                            </NeonButton>
+                        </div>
+                        {/* Mobile Status Indicator */}
+                        <div className="md:hidden flex items-center gap-2">
+                            <StatusIndicator status="online" label="ONLINE" />
+                        </div>
                     </div>
                 </div>
             </header>
 
             {/* Main Application Area */}
-            <main className="container mx-auto p-4 lg:p-8 space-y-8 relative z-10 pt-48 mt-8">
+            <main className="container mx-auto p-4 lg:p-8 space-y-6 md:space-y-8 relative z-10 pt-36 md:pt-48 mt-4 md:mt-8">
                 {/* 1. Detection Console */}
                 <section>
                     <GlassPanel className="overflow-hidden" corners>
@@ -305,7 +319,7 @@ const UserDashboard = () => {
 
                 {/* 2. Live Counters */}
                 <section>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
                         {[
                             { label: 'Cars', key: 'car' },
                             { label: 'Buses', key: 'bus' },
@@ -333,7 +347,7 @@ const UserDashboard = () => {
                         <h3 className="font-orbitron text-sm font-bold text-primary flex items-center gap-3">
                             <Activity className="w-5 h-5" /> MASTER DETECTION LOG
                         </h3>
-                        <div className="flex items-center gap-4 w-full md:w-auto">
+                        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
                             <input
                                 type="text"
                                 placeholder="FILTER RESULTS..."
@@ -341,14 +355,16 @@ const UserDashboard = () => {
                                 onChange={(e) => setFilterText(e.target.value)}
                                 className="bg-muted/20 border border-border/50 rounded px-3 py-1.5 font-mono text-[10px] text-white focus:border-primary outline-none w-full md:w-64"
                             />
-                            <button
-                                onClick={handleExportCSV}
-                                className="p-1.5 px-4 rounded bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 hover:border-primary transition-all flex items-center gap-2 font-mono text-[10px] font-bold uppercase"
-                            >
-                                <Download className="w-3 h-3" /> EXPORT DATA
-                            </button>
-                            <div className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">
-                                RECORDS: {reportData.length} | SYNCED: {new Date().toLocaleTimeString()}
+                            <div className="flex w-full md:w-auto justify-between items-center gap-4">
+                                <button
+                                    onClick={handleExportCSV}
+                                    className="p-1.5 px-4 rounded bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 hover:border-primary transition-all flex items-center gap-2 font-mono text-[10px] font-bold uppercase flex-1 md:flex-none justify-center"
+                                >
+                                    <Download className="w-3 h-3" /> EXPORT
+                                </button>
+                                <div className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">
+                                    {reportData.length} RECS
+                                </div>
                             </div>
                         </div>
                     </div>

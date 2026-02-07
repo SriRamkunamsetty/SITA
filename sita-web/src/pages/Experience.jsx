@@ -211,7 +211,7 @@ const Experience = () => {
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-in fade-in duration-300">
                         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.05] pointer-events-none" />
 
-                        <GlassPanel className="w-full max-w-5xl p-8 relative z-10" corners>
+                        <GlassPanel className="w-full max-w-5xl p-4 md:p-8 relative z-10" corners>
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
 
                             <div className="text-center mb-10">
@@ -344,7 +344,7 @@ const Experience = () => {
                                 and deep learning, SITA identifies **vehicle types**, extracts **precise colors**,
                                 and performs **optical character recognition on number plates** with exceptional accuracy.
                             </p>
-                            <GlassPanel className="p-8" corners>
+                            <GlassPanel className="p-4 md:p-8" corners>
                                 <div className="grid grid-cols-3 gap-8 text-center">
                                     <div>
                                         <div className="font-orbitron text-3xl md:text-4xl font-bold text-primary mb-2">2.4M</div>
@@ -494,7 +494,7 @@ const Experience = () => {
                     </div>
 
                     <GlassPanel
-                        className="p-8 md:p-12 hover:border-destructive/30 transition-colors duration-500"
+                        className="p-6 md:p-12 hover:border-destructive/30 transition-colors duration-500"
                         style={{ borderColor: 'hsl(340 100% 60% / 0.2)' }}
                     >
                         <div className="flex items-start gap-6">

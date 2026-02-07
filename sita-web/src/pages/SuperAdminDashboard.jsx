@@ -88,29 +88,33 @@ const SuperAdminDashboard = () => {
             </div>
 
             {/* HEADER */}
-            <header className="fixed top-0 left-0 right-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/5 h-16 flex items-center justify-between px-6 lg:px-12">
-                <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 rounded flex items-center justify-center border border-purple-500/50 bg-purple-500/10 text-purple-400">
-                        <Eye className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <h1 className="font-orbitron text-lg font-bold tracking-widest text-white">
-                            SITA <span className="text-xs ml-2 px-2 py-0.5 rounded border border-purple-500/30 text-purple-400">OVERWATCH</span>
-                        </h1>
+            <header className="fixed top-0 left-0 right-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/5 h-auto md:h-16 flex flex-col md:flex-row items-center justify-between px-4 lg:px-12 py-3 md:py-0 gap-3 md:gap-0">
+                <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+                    <div className="flex items-center gap-4">
+                        <div className="w-8 h-8 rounded flex items-center justify-center border border-purple-500/50 bg-purple-500/10 text-purple-400">
+                            <Eye className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h1 className="font-orbitron text-lg font-bold tracking-widest text-white">
+                                SITA <span className="text-xs ml-2 px-2 py-0.5 rounded border border-purple-500/30 text-purple-400">OVERWATCH</span>
+                            </h1>
+                        </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-4">
-                    <button onClick={loadData} className="p-2 hover:bg-white/5 rounded-full transition-colors">
-                        <RefreshCw className={`w-4 h-4 text-muted-foreground ${isLoading ? 'animate-spin' : ''}`} />
-                    </button>
-                    <div className="h-6 w-px bg-white/10" />
-                    <NeonButton onClick={logout} size="sm" className="border-white/10 hover:bg-white/5 text-xs">
-                        TERMINATE SESSION
-                    </NeonButton>
+                <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                    <div className="flex items-center gap-4">
+                        <button onClick={loadData} className="p-2 hover:bg-white/5 rounded-full transition-colors">
+                            <RefreshCw className={`w-4 h-4 text-muted-foreground ${isLoading ? 'animate-spin' : ''}`} />
+                        </button>
+                        <div className="h-6 w-px bg-white/10" />
+                        <NeonButton onClick={logout} size="sm" className="border-white/10 hover:bg-white/5 text-xs">
+                            TERMINATE SESSION
+                        </NeonButton>
+                    </div>
                 </div>
             </header>
 
-            <main className="relative z-10 pt-24 px-4 lg:px-12 pb-12 max-w-[1600px] mx-auto">
+            <main className="relative z-10 pt-32 md:pt-24 px-4 lg:px-12 pb-12 max-w-[1600px] mx-auto">
                 {/* Stats Bar */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <StatCard label="ACTIVE SECTORS" value={allOrgs.length} icon={<Globe className="text-purple-400" />} />
@@ -278,8 +282,8 @@ const OrgDetailView = ({ org, users }) => (
                     <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[10px] font-bold font-mono border border-purple-500/20">ACTIVE SECTOR</span>
                     <span className="text-white/30 text-xs font-mono">ID: {org.id}</span>
                 </div>
-                <h1 className="text-4xl lg:text-5xl font-orbitron font-bold text-white mb-2">{org.name}</h1>
-                <div className="flex flex-wrap gap-6 text-sm font-mono text-muted-foreground mt-4">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-orbitron font-bold text-white mb-2">{org.name}</h1>
+                <div className="flex flex-col md:flex-row flex-wrap gap-4 md:gap-6 text-sm font-mono text-muted-foreground mt-4">
                     <span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> {org.district}, {org.state}</span>
                     <span className="flex items-center gap-2"><Lock className="w-4 h-4" /> Pass: <span className="text-white">{org.password}</span></span>
                     <span className="flex items-center gap-2"><Activity className="w-4 h-4" /> Code: <span className="text-purple-400">{org.unique_code}</span></span>
