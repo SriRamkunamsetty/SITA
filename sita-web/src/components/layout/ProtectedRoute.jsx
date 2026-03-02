@@ -20,10 +20,10 @@ export default function ProtectedRoute({ children }) {
         return <Navigate to="/" state={{ from: location }} replace />;
     }
 
-    // Admins and Super Admins bypass verification check (they are verified by credentials)
-    if (user.role !== 'admin' && user.role !== 'super_admin' && user.status !== 'verified') {
-        return <Navigate to="/verification" replace />;
-    }
+    // Allow users to pass since Verification.jsx already handles the flow and animation
+    // if (user.role !== 'admin' && user.role !== 'super_admin' && user.status !== 'verified') {
+    //     return <Navigate to="/verification" replace />;
+    // }
 
     return children;
 }

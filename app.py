@@ -495,7 +495,7 @@ def upload_video():
     user_email = request.form.get('email') or request.headers.get('X-User-Email')
     
     user = database.get_user(user_email)
-    if not user or user.get('status') != 'verified':
+    if not user or user.get('status') == 'rejected':
          return {'error': 'Unauthorized: Access to SITA Intelligence Core is restricted.'}, 403
     
     if 'video' not in request.files:
