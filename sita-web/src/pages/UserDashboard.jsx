@@ -67,7 +67,12 @@ const UserDashboard = () => {
                     if (data && data.status) {
                         if (data.status === 'processing') {
                             setProcessingStatus('processing');
-                            setUploadProgress((prev) => (prev < 90 ? prev + 1 : prev)); // Fake progress to 90
+                            // Map backend progress to UI progress
+                            if (data.counters && data.counters.progress !== undefined) {
+                                setUploadProgress(data.counters.progress);
+                            } else {
+                                setUploadProgress((prev) => (prev < 90 ? prev + 1 : prev)); // Fallback
+                            }
                         } else if (data.status === 'complete') {
                             setProcessingStatus('complete');
                             setUploadProgress(100);
@@ -128,14 +133,27 @@ const UserDashboard = () => {
                         setUploadProgress(0); // Reset for processing phase
                         showToast("UPLOAD COMPLETE. ANALYZING...", "info");
                     } else {
-                        throw new Error(response.error || "Upload failed");
+                        setProcessingStatus('idle');
+                        setIsAnalyzing(false);
+                        showToast(response.error || "Upload failed", "error");
                     }
                 } else {
-                    throw new Error("Upload failed with status " + xhr.status);
+                    let errorMessage = "Upload failed with status " + xhr.status;
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.error) errorMessage = response.error;
+                    } catch (e) { }
+                    setProcessingStatus('idle');
+                    setIsAnalyzing(false);
+                    showToast(errorMessage, "error");
                 }
             };
 
-            xhr.onerror = () => { throw new Error("Network Error"); };
+            xhr.onerror = () => {
+                setProcessingStatus('idle');
+                setIsAnalyzing(false);
+                showToast("Network Error during upload", "error");
+            };
             xhr.send(formData);
 
         } catch (error) {
@@ -278,7 +296,7 @@ const UserDashboard = () => {
                                                     {processingStatus === 'complete' && 'EXTRACTION SUCCESSFUL'}
                                                 </p>
                                                 <p className="font-mono text-[10px] text-muted-foreground uppercase animate-pulse mt-1">
-                                                    {isAnalyzing ? 'Analyzing traffic patterns via YOLOfier-v11 Kernal' : 'Secure encrypted connection established'}
+                                                    {isAnalyzing ? 'Analyzing traffic patterns via YOLOfier-v11 Kernel' : 'Secure encrypted connection established'}
                                                 </p>
                                             </div>
 
